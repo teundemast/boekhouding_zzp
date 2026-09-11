@@ -12,6 +12,7 @@ import argparse
 import socket
 import sys
 import webbrowser
+from pathlib import Path
 
 
 def local_ip() -> str:
@@ -43,6 +44,10 @@ def main(argv: list[str] | None = None) -> int:
 
     db.ensure_directories()
     print(f"Gegevens: {db.DATA_DIR}")
+    if db.DATA_DIR == Path.home() / db.OUDE_DATA_DIR:
+        print("  Deze map staat in Documents, waar OneDrive hem kan gaan synchroniseren.")
+        print("  Verhuizen mag: sluit dit venster en verplaats de map naar")
+        print(f"  {Path.home() / 'Boekhouding'}. Het programma vindt hem daar zelf.")
     print(f"Draait op {adres}")
     if argumenten.lan:
         print(f"Op je telefoon: http://{local_ip()}:{argumenten.poort}")

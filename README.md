@@ -45,10 +45,10 @@ klant.
 
 ## Waar staan mijn gegevens
 
-Alles staat buiten deze map, standaard in `~/Documents/boekhouding-data`:
+Alles staat buiten deze map, standaard in `C:\Users\<jij>\Boekhouding`:
 
 ```
-boekhouding-data/
+Boekhouding/
   boekhouding.sqlite3   de administratie
   facturen/2026/        de verstuurde pdf's, precies zoals ze verstuurd zijn
   documenten/2026/03/   bonnen en inkoopfacturen
@@ -56,7 +56,19 @@ boekhouding-data/
   backups/
 ```
 
-Een andere locatie: zet `BOEKHOUDING_DATA` voordat je start.
+Die map staat bewust *niet* in `Documents`: dat is de map die OneDrive aanbiedt om te
+back-uppen, en een sqlite-database die onder je handen gesynchroniseerd wordt is een
+database die op een dag stuk is. In `AppData` hoort het ook niet, want je facturen en
+bonnen zijn jouw documenten &mdash; die moet je over zeven jaar nog kunnen vinden en naar
+een usb-stick kunnen slepen, niet opgraven uit een verborgen map.
+
+Stond je administratie al in `Documents/boekhouding-data`, dan blijft het programma die
+gebruiken: een update laat je nooit naar een leeg boekhoudingetje kijken. Verhuizen mag,
+en het programma zegt het er ook bij als hij hem daar nog vindt: sluit het programma en
+verplaats de map naar `Boekhouding` in je gebruikersmap.
+
+Een andere locatie, bijvoorbeeld een tweede schijf: zet `BOEKHOUDING_DATA` voordat je
+start.
 
 ### Aan iemand anders geven
 
@@ -178,7 +190,7 @@ beginnen, geen belastingadvies.**
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-161 tests. De belangrijkste zitten in
+166 tests. De belangrijkste zitten in
 [`tests/test_vat_return.py`](tests/test_vat_return.py): die lezen als de specificatie van
 wat dit programma over de Nederlandse btw gelooft, scenario voor scenario. Verder
 [`tests/test_money.py`](tests/test_money.py) voor afronding,
@@ -218,8 +230,6 @@ mee; de schermen ontbreken nog.
 kunnen, welke belastingregels er gelden, en wat er expliciet níét in moet. Dat bestand
 staat er bewust nog in. Het leest als de specificatie, het legt uit waarom sommige dingen
 zo zijn, en een deel ervan is nog niet gebouwd &mdash; zie *Nog niet gebouwd*.
-
-Wil je meedoen of iets melden: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Licentie en aansprakelijkheid
 

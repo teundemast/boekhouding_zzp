@@ -15,7 +15,33 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-DATA_DIR = Path(os.environ.get("BOEKHOUDING_DATA", Path.home() / "Documents" / "boekhouding-data"))
+#: Waar de administratie stond voordat de standaardplek veranderde.
+OUDE_DATA_DIR = Path("Documents") / "boekhouding-data"
+
+
+def standaard_data_dir(home: Path | None = None) -> Path:
+    """Where the administration lives when BOEKHOUDING_DATA is not set.
+
+    A visible folder straight in the user's home directory, deliberately *not* inside
+    Documents. On Windows, Documents is the folder OneDrive offers to back up, and a
+    live SQLite database in a syncing folder is a well-known way to corrupt one -- this
+    program is meant to keep working without a cloud anywhere near it. AppData would be
+    wrong for the opposite reason: facturen/ and documenten/ are the user's own records,
+    which have to stay findable, copyable to a USB stick, and readable seven years from
+    now, not hidden away as program state.
+
+    An administration already sitting in the old location keeps being used, so updating
+    the program never leaves someone staring at an empty set of books.
+    """
+    home = home or Path.home()
+    nieuw = home / "Boekhouding"
+    oud = home / OUDE_DATA_DIR
+    if not nieuw.exists() and (oud / "boekhouding.sqlite3").exists():
+        return oud
+    return nieuw
+
+
+DATA_DIR = Path(os.environ.get("BOEKHOUDING_DATA") or standaard_data_dir())
 DB_PATH = DATA_DIR / "boekhouding.sqlite3"
 DOCUMENTS_DIR = DATA_DIR / "documenten"
 INVOICE_PDF_DIR = DATA_DIR / "facturen"

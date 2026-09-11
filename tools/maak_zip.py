@@ -25,7 +25,7 @@ WORTEL = Path(__file__).resolve().parent.parent
 MEE = ["app", "tools", "tests"]
 LOSSE_BESTANDEN = [
     "Boekhouding.cmd", "start.ps1", "requirements.txt",
-    "README.md", "CONTRIBUTING.md", "PROMPT.md", "LICENSE",
+    "README.md", "PROMPT.md", "LICENSE",
 ]
 
 #: Nooit meesturen.
