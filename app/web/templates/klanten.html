@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<p><a class="knop" href="/klanten/nieuw">Nieuwe klant</a></p>
+
+<table>
+  <thead>
+    <tr><th>Naam</th><th>Klantnummer</th><th>Plaats</th><th>Land</th><th>Btw-nummer</th><th>Taal</th></tr>
+  </thead>
+  <tbody>
+    {% for klant in klanten %}
+    <tr>
+      <td><a href="/klanten/{{ klant.id }}">{{ klant.naam }}</a></td>
+      <td class="zacht">{{ klant.klantnummer }}</td>
+      <td>{{ klant.plaats }}</td>
+      <td>{{ klant.land }}</td>
+      <td class="zacht">{{ klant.btw_nummer }}</td>
+      <td class="zacht">{{ klant.taal }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="zacht">Nog geen klanten.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

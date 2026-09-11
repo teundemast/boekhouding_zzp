@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<p class="uitleg">{{ regel.label }} &middot; {{ aangifte.van | datum }} t/m {{ aangifte.tot | datum }}</p>
+
+<table>
+  <thead>
+    <tr><th>Datum</th><th>Soort</th><th>Nummer</th><th>Omschrijving</th><th>Behandeling</th>
+      <th class="bedrag">Omzet</th><th class="bedrag">Btw</th></tr>
+  </thead>
+  <tbody>
+    {% for post in regel.posten %}
+    <tr>
+      <td>{{ post.datum | datum }}</td>
+      <td class="zacht">{{ post.soort }}</td>
+      <td>
+        {% if post.soort == "factuur" %}<a href="/facturen/{{ post.id }}">{{ post.nummer }}</a>
+        {% else %}{{ post.nummer or "-" }}{% endif %}
+      </td>
+      <td>{{ post.omschrijving }}</td>
+      <td class="zacht">{{ post.behandeling }}</td>
+      <td class="bedrag">{{ post.omzet_cents | euro }}</td>
+      <td class="bedrag">{{ post.btw_cents | euro }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="totaal">
+      <td colspan="5">Totaal rubriek {{ regel.rubriek.value }}</td>
+      <td class="bedrag">{{ regel.omzet_cents | euro }}</td>
+      <td class="bedrag">{{ regel.btw_cents | euro }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><a href="/btw?jaar={{ aangifte.jaar }}&kwartaal={{ aangifte.kwartaal }}">&larr; Terug naar de aangifte</a></p>
+{% endblock %}

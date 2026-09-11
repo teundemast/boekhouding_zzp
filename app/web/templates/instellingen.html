@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+{% if eerste_start %}
+  <div class="melding info">
+    <p style="margin-top:0">
+      <strong>Welkom.</strong> Dit programma is nog leeg. Vul hieronder je eigen
+      bedrijfsgegevens in; ze komen op elke factuur die je verstuurt en zijn wettelijk
+      verplicht.
+    </p>
+    <p style="margin-bottom:0">
+      Zolang deze ontbreken kun je wel alles klaarzetten, maar geen factuur definitief
+      maken: <strong>{{ ontbrekend | join(", ") }}</strong>.
+    </p>
+  </div>
+{% elif ontbrekend %}
+  <div class="melding let-op">
+    Nog niet compleet: <strong>{{ ontbrekend | join(", ") }}</strong>.
+    Zonder deze gegevens kun je geen factuur definitief maken.
+  </div>
+{% endif %}
+
+<form method="post" action="/instellingen">
+  <fieldset>
+    <legend>Bedrijfsgegevens (komen op elke factuur)</legend>
+    <div class="rij">
+      <div class="breed"><label>Bedrijfsnaam</label><input name="bedrijfsnaam" value="{{ instellingen.bedrijfsnaam }}" required></div>
+      <div class="breed"><label>Adres</label><input name="adres" value="{{ instellingen.adres }}"></div>
+      <div class="smal"><label>Postcode</label><input name="postcode" value="{{ instellingen.postcode }}"></div>
+      <div><label>Plaats</label><input name="plaats" value="{{ instellingen.plaats }}"></div>
+    </div>
+    <div class="rij">
+      <div><label>Telefoon</label><input name="telefoon" value="{{ instellingen.telefoon }}"></div>
+      <div><label>E-mail</label><input name="email" value="{{ instellingen.email }}"></div>
+      <div><label>Btw-nummer</label><input name="btw_nummer" value="{{ instellingen.btw_nummer }}"></div>
+      <div><label>IBAN</label><input name="iban" value="{{ instellingen.iban }}"></div>
+      <div class="smal"><label>KvK</label><input name="kvk_nummer" value="{{ instellingen.kvk_nummer }}"></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Facturen</legend>
+    <div class="rij">
+      <div class="smal"><label>Nummerprefix</label><input name="factuur_prefix" value="{{ instellingen.factuur_prefix }}"></div>
+      <div class="smal"><label>Cijfers</label><input type="number" name="factuur_cijfers" value="{{ instellingen.factuur_cijfers }}"></div>
+      <div class="smal"><label>Per jaar hernummeren</label>
+        <input type="checkbox" name="nummering_per_jaar" value="1" {{ "checked" if instellingen.nummering_per_jaar }}></div>
+      <div class="smal"><label>Betaaltermijn (dagen)</label><input type="number" name="betaaltermijn_dagen" value="{{ instellingen.betaaltermijn_dagen }}"></div>
+      <div class="smal"><label>Accentkleur</label><input type="color" name="accentkleur" value="{{ instellingen.accentkleur }}"></div>
+    </div>
+    <div class="rij">
+      <div class="breed"><label>Voettekst ({betaaltermijn} wordt ingevuld)</label>
+        <input name="factuur_voettekst" value="{{ instellingen.factuur_voettekst }}"></div>
+    </div>
+    <div class="rij">
+      <div class="smal"><label>Laatst gebruikte nummer</label>
+        <input name="laatste_factuurnummer" placeholder="bv. 6"></div>
+      <div><label>&nbsp;</label>
+        <p class="zacht" style="margin:0">
+          De volgende factuur wordt <strong>{{ volgend_nummer }}</strong>.
+          Begin je hier met een lopende reeks? Vul dan het laatste nummer in dat je
+          al buiten dit systeem hebt verstuurd. De teller kan alleen omhoog.
+        </p></div>
+    </div>
+    <p class="zacht">
+      Nummers zijn doorlopend en zonder gaten. Wijzig het prefix of het aantal cijfers
+      alleen aan het begin van een jaar &mdash; de reeks zelf loopt gewoon door.
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Btw</legend>
+    <div class="rij">
+      <div class="smal"><label>Kleineondernemersregeling</label>
+        <input type="checkbox" name="kor_actief" value="1" {{ "checked" if instellingen.kor_actief }}></div>
+      <div class="smal"><label>KOR vanaf</label>
+        <input type="date" name="kor_startdatum" value="{{ instellingen.kor_startdatum or '' }}"></div>
+      <div class="smal"><label>Reserveren voor belasting (%)</label>
+        <input type="number" name="reservering_procent" value="{{ instellingen.reservering_permille // 10 }}"></div>
+    </div>
+    <p class="zacht">
+      Met de KOR aan is je omzet vrijgesteld en trek je geen voorbelasting af. Zet dit
+      alleen aan als je je bij de Belastingdienst voor de KOR hebt aangemeld.
+    </p>
+  </fieldset>
+
+  <button type="submit">Opslaan</button>
+</form>
+
+<h2>Belastingparameters per jaar</h2>
+<p class="uitleg">
+  Deze staan in <code>app/taxyears.py</code>, met het jaar erbij. Ze worden gebruikt voor
+  schattingen en signalen, nooit voor de btw-aangifte zelf. Controleer ze elk jaar bij de
+  Belastingdienst.
+</p>
+{% if huidig_jaar_is_schatting %}
+  <div class="melding let-op">
+    De cijfers voor dit jaar zijn nog niet geverifieerd. Alles wat ermee wordt berekend is
+    een schatting.
+  </div>
+{% endif %}
+<table>
+  <thead>
+    <tr><th>Jaar</th><th class="bedrag">Zelfstandigenaftrek</th><th class="bedrag">Startersaftrek</th>
+      <th class="bedrag">MKB-vrijstelling</th><th class="bedrag">Urencriterium</th>
+      <th class="bedrag">Investeringsgrens</th><th class="bedrag">Km-vergoeding</th><th>Geverifieerd</th></tr>
+  </thead>
+  <tbody>
+    {% for jaar in belastingjaren %}
+    <tr>
+      <td>{{ jaar.year }}</td>
+      <td class="bedrag">{{ jaar.zelfstandigenaftrek_cents | euro }}</td>
+      <td class="bedrag">{{ jaar.startersaftrek_cents | euro }}</td>
+      <td class="bedrag">{{ jaar.mkb_winstvrijstelling_pct }}%</td>
+      <td class="bedrag">{{ jaar.urencriterium }}</td>
+      <td class="bedrag">{{ jaar.investeringsgrens_cents | euro }}</td>
+      <td class="bedrag">{{ jaar.kilometervergoeding_cents | euro }}</td>
+      <td>{{ "ja" if jaar.verified else "nee" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Gegevens</h2>
+<p class="zacht">
+  Alles staat in <code>{{ data_map }}</code>: de database, de verstuurde pdf's en alle
+  bonnen. Maak daar een back-up van met <code>python -m tools.backup</code>.
+</p>
+
+{% endblock %}

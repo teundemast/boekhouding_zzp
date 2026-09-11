@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<p>
+  <a class="knop" href="/facturen/nieuw">Nieuwe factuur</a>
+  <a class="knop secundair" href="/uren">Factuur uit uren</a>
+</p>
+
+<form method="get" action="/facturen" class="rij">
+  <div class="smal"><label>Jaar</label><input type="number" name="jaar" value="{{ jaar }}"></div>
+  <div><label>Status</label>
+    <select name="status">
+      <option value="">alle</option>
+      {% for s in ["concept", "definitief", "verzonden", "betaald"] %}
+        <option value="{{ s }}" {{ "selected" if s == status }}>{{ s }}</option>
+      {% endfor %}
+    </select></div>
+  <div class="smal"><label>&nbsp;</label><button type="submit" class="secundair">Filter</button></div>
+</form>
+
+{% if openstaand_totaal %}
+  <p class="zacht">Openstaand in deze selectie: <strong>{{ openstaand_totaal | euro }}</strong></p>
+{% endif %}
+
+<table>
+  <thead>
+    <tr>
+      <th>Nummer</th><th>Datum</th><th>Klant</th><th>Kenmerk</th>
+      <th class="bedrag">Excl btw</th><th class="bedrag">Incl btw</th><th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for factuur in facturen %}
+    <tr>
+      <td><a href="/facturen/{{ factuur.id }}">{{ factuur.nummer or "concept" }}</a></td>
+      <td>{{ factuur.datum | datum }}</td>
+      <td>{{ factuur.client.naam }}</td>
+      <td class="zacht">{{ factuur.uw_kenmerk }}</td>
+      <td class="bedrag">{{ factuur.subtotaal_cents | euro }}</td>
+      <td class="bedrag">{{ factuur.totaal_incl_cents | euro }}</td>
+      <td>
+        <span class="label-status {{ 'te-laat' if factuur.is_overdue else factuur.status }}">
+          {{ "te laat" if factuur.is_overdue else factuur.status }}
+        </span>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="zacht">Nog geen facturen.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

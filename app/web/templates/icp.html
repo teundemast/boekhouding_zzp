@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<p class="uitleg">
+  Opgaaf intracommunautaire prestaties, {{ aangifte.van | datum }} t/m {{ aangifte.tot | datum }}.
+  Deze opgaaf dien je apart in, naast de btw-aangifte.
+</p>
+
+<table>
+  <thead>
+    <tr><th>Btw-nummer</th><th>Klant</th><th>Land</th><th>Soort</th>
+      <th class="bedrag">Bedrag</th><th>Facturen</th></tr>
+  </thead>
+  <tbody>
+    {% for regel in aangifte.icp %}
+    <tr>
+      <td>{{ regel.btw_nummer or "ONTBREEKT" }}</td>
+      <td>{{ regel.klant }}</td>
+      <td>{{ regel.landcode }}</td>
+      <td>{{ regel.soort }}</td>
+      <td class="bedrag">{{ regel.bedrag_cents | euro }}</td>
+      <td class="zacht">{{ regel.facturen | join(", ") }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="zacht">Geen intracommunautaire prestaties in dit kwartaal.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p><a href="/btw?jaar={{ aangifte.jaar }}&kwartaal={{ aangifte.kwartaal }}">&larr; Terug naar de aangifte</a></p>
+{% endblock %}

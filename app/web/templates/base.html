@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ titel }} &middot; Boekhouding</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<nav>
+  <a class="merk" href="/">Boekhouding</a>
+  <a href="/facturen">Facturen</a>
+  <a href="/kosten">Kosten</a>
+  <a href="/btw">Btw-aangifte</a>
+  <a href="/uren">Uren</a>
+  <a href="/klanten">Klanten</a>
+  <a class="rechts" href="/instellingen">Instellingen</a>
+</nav>
+
+<main>
+  <h1>{{ titel }}</h1>
+  {% if fout %}<div class="melding fout">{{ fout }}</div>{% endif %}
+  {% block inhoud %}{% endblock %}
+</main>
+</body>
+</html>

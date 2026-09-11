@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<form method="post" action="/klanten/opslaan">
+  <input type="hidden" name="klant_id" value="{{ klant.id if klant else '' }}">
+  <fieldset>
+    <legend>Gegevens</legend>
+    <div class="rij">
+      <div class="breed"><label>Naam</label><input name="naam" value="{{ klant.naam if klant else '' }}" required></div>
+      <div><label>Klantnummer</label><input name="klantnummer" value="{{ klant.klantnummer if klant else '' }}"></div>
+      <div><label>Contactpersoon</label><input name="contactpersoon" value="{{ klant.contactpersoon if klant else '' }}"></div>
+      <div><label>E-mail</label><input name="email" value="{{ klant.email if klant else '' }}"></div>
+    </div>
+    <div class="rij">
+      <div class="breed"><label>Adres</label><input name="adres" value="{{ klant.adres if klant else '' }}"></div>
+      <div class="smal"><label>Postcode</label><input name="postcode" value="{{ klant.postcode if klant else '' }}"></div>
+      <div><label>Plaats</label><input name="plaats" value="{{ klant.plaats if klant else '' }}"></div>
+      <div><label>Land</label><input name="land" value="{{ klant.land if klant else 'Nederland' }}"></div>
+      <div class="smal"><label>Landcode</label><input name="landcode" value="{{ klant.landcode if klant else 'NL' }}"></div>
+    </div>
+    <div class="rij">
+      <div><label>Btw-nummer</label><input name="btw_nummer" value="{{ klant.btw_nummer if klant else '' }}"></div>
+      <div class="smal"><label>Betaaltermijn</label><input name="betaaltermijn_dagen" value="{{ klant.betaaltermijn_dagen or '' if klant else '' }}" placeholder="standaard"></div>
+      <div class="smal"><label>Uurtarief</label><input name="uurtarief" value="{{ klant.uurtarief_cents | euro_kaal if klant and klant.uurtarief_cents else '' }}"></div>
+      <div class="smal"><label>Taal</label>
+        <select name="taal">
+          <option value="nl" {{ "selected" if klant and klant.taal == "nl" }}>Nederlands</option>
+          <option value="en" {{ "selected" if klant and klant.taal == "en" }}>Engels</option>
+        </select></div>
+    </div>
+    <div class="rij">
+      <div class="breed"><label>Notities</label><textarea name="notities">{{ klant.notities if klant else '' }}</textarea></div>
+    </div>
+    <button type="submit">Opslaan</button>
+  </fieldset>
+</form>
+
+{% if klant %}
+<h2>Projecten</h2>
+<p class="uitleg">De code komt in de kolom <em>Code</em> op de factuur en groepeert je uren.</p>
+<table>
+  <thead><tr><th>Code</th><th>Omschrijving</th><th class="bedrag">Uurtarief</th><th>Btw</th></tr></thead>
+  <tbody>
+    {% for project in projecten %}
+    <tr>
+      <td>{{ project.code }}</td>
+      <td>{{ project.omschrijving }}</td>
+      <td class="bedrag">{{ project.uurtarief_cents | euro }}</td>
+      <td class="zacht">{{ project.btw_behandeling }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="zacht">Nog geen projecten.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<form method="post" action="/klanten/{{ klant.id }}/project">
+  <fieldset>
+    <legend>Project toevoegen</legend>
+    <div class="rij">
+      <div class="smal"><label>Code</label><input name="code" required></div>
+      <div class="breed"><label>Omschrijving</label><input name="omschrijving"></div>
+      <div class="smal"><label>Uurtarief</label><input name="uurtarief" value="0,00"></div>
+      <div class="smal"><label>&nbsp;</label><button type="submit">Toevoegen</button></div>
+    </div>
+  </fieldset>
+</form>
+
+<form method="post" action="/klanten/{{ klant.id }}/verwijderen">
+  <button class="gevaar klein" type="submit">Klant archiveren</button>
+  <span class="zacht">Facturen blijven bewaard; de klant verdwijnt alleen uit de lijst.</span>
+</form>
+{% endif %}
+
+<p><a href="/klanten">&larr; Alle klanten</a></p>
+{% endblock %}

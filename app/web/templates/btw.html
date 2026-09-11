@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<p class="uitleg">
+  Volgens het factuurstelsel: de factuurdatum bepaalt het kwartaal.
+  Periode {{ aangifte.van | datum }} t/m {{ aangifte.tot | datum }}.
+  Alleen definitieve facturen tellen mee.
+</p>
+
+<form method="get" action="/btw" class="rij">
+  <div class="smal"><label>Jaar</label><input type="number" name="jaar" value="{{ jaar }}"></div>
+  <div class="smal">
+    <label>Kwartaal</label>
+    <select name="kwartaal">
+      {% for k in [1, 2, 3, 4] %}
+        <option value="{{ k }}" {{ "selected" if k == kwartaal }}>{{ k }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="smal"><label>&nbsp;</label><button type="submit">Toon</button></div>
+</form>
+
+{% if aangifte.kor_actief %}
+  <div class="melding info">
+    De kleineondernemersregeling staat aan: je omzet is vrijgesteld en je trekt geen
+    voorbelasting af.
+  </div>
+{% endif %}
+
+{% for punt in aangifte.aandachtspunten %}
+  <div class="melding let-op">{{ punt }}</div>
+{% endfor %}
+
+<h2>Over te nemen in de aangifte</h2>
+<p class="uitleg">
+  De <strong>vetgedrukte</strong> bedragen typ je over in het portaal: hele euro's,
+  afgerond in je eigen voordeel zoals de Belastingdienst toestaat. Daarachter staat het
+  exacte bedrag tot op de cent, dat is wat je administratie zegt.
+</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width:3rem">Rubriek</th><th>Omschrijving</th>
+      <th class="bedrag">Omzet</th><th class="bedrag">Btw</th>
+      <th class="bedrag">Exact (omzet / btw)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rubriek in volgorde %}
+      {% set regel = aangifte.rubrieken[rubriek] %}
+      <tr>
+        <td class="rubriek-code">{{ rubriek.value }}</td>
+        <td>
+          {% if regel.posten %}
+            <a href="/btw/detail/{{ rubriek.value }}?jaar={{ jaar }}&kwartaal={{ kwartaal }}">{{ regel.label }}</a>
+          {% else %}
+            <span class="zacht">{{ regel.label }}</span>
+          {% endif %}
+        </td>
+        <td class="bedrag"><strong>{{ regel.omzet_aangifte_cents | euro }}</strong></td>
+        <td class="bedrag"><strong>{{ regel.btw_aangifte_cents | euro }}</strong></td>
+        <td class="bedrag zacht">
+          {{ regel.omzet_cents | euro_kaal }} / {{ regel.btw_cents | euro_kaal }}
+        </td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td class="rubriek-code">5a</td>
+      <td>Verschuldigde omzetbelasting</td>
+      <td class="bedrag"></td>
+      <td class="bedrag"><strong>{{ aangifte.verschuldigd_aangifte_cents | euro }}</strong></td>
+      <td class="bedrag zacht">{{ aangifte.verschuldigd_cents | euro_kaal }}</td>
+    </tr>
+    <tr>
+      <td class="rubriek-code">5b</td>
+      <td><a href="/btw/detail/5b?jaar={{ jaar }}&kwartaal={{ kwartaal }}">Voorbelasting</a></td>
+      <td class="bedrag"></td>
+      <td class="bedrag"><strong>{{ aangifte.voorbelasting_aangifte_cents | euro }}</strong></td>
+      <td class="bedrag zacht">{{ aangifte.voorbelasting_cents | euro_kaal }}</td>
+    </tr>
+    <tr class="totaal">
+      <td></td>
+      <td>{{ "Totaal te betalen" if aangifte.te_betalen else "Totaal terug te vragen" }}</td>
+      <td class="bedrag"></td>
+      <td class="bedrag">{{ aangifte.saldo_aangifte_cents | abs | euro }}</td>
+      <td class="bedrag zacht">{{ aangifte.saldo_cents | abs | euro_kaal }}</td>
+    </tr>
+  </tbody>
+</table>
+
+{% if aangifte.afrondingsverschil_cents %}
+  <p class="zacht">
+    Door het afronden betaal je {{ aangifte.afrondingsverschil_cents | abs | euro }}
+    minder dan het exacte saldo. Dat verschil is toegestaan en valt altijd jouw kant op.
+  </p>
+{% endif %}
+
+<p>
+  <a class="knop secundair klein" href="/btw/export.csv?jaar={{ jaar }}&kwartaal={{ kwartaal }}">Detail als CSV</a>
+  {% if aangifte.icp %}
+    <a class="knop secundair klein" href="/btw/icp?jaar={{ jaar }}&kwartaal={{ kwartaal }}">ICP-opgaaf</a>
+  {% endif %}
+</p>
+
+<h2>Controle voor het indienen</h2>
+<table>
+  <tbody>
+    {% for punt in aangifte.checklist %}
+    <tr>
+      <td style="width:2rem">{{ "OK" if punt.ok else "!" }}</td>
+      <td>{{ punt.tekst }}<div class="zacht">{{ punt.detail }}</div></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if correctie %}
+  <h2>Verschil met de ingediende aangifte</h2>
+  <div class="melding {{ 'let-op' if correctie.suppletie_nodig else 'info' }}">
+    {{ correctie.advies }}
+  </div>
+  {% if correctie.verschillen %}
+  <table>
+    <thead><tr><th>Rubriek</th><th>Omschrijving</th><th class="bedrag">Omzet</th><th class="bedrag">Btw</th></tr></thead>
+    <tbody>
+      {% for verschil in correctie.verschillen %}
+      <tr>
+        <td class="rubriek-code">{{ verschil.rubriek }}</td>
+        <td>{{ verschil.label }}</td>
+        <td class="bedrag">{{ verschil.omzet_verschil_cents | euro }}</td>
+        <td class="bedrag">{{ verschil.btw_verschil_cents | euro }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+{% else %}
+  <h2>Indienen</h2>
+  <p class="zacht">
+    Vul de bedragen hierboven over in het portaal van de Belastingdienst en markeer het
+    kwartaal daarna hier als ingediend. Dat vergrendelt de periode: latere wijzigingen
+    verschijnen vanaf dan als correctie in plaats van dat ze stil een ingediend cijfer
+    veranderen.
+  </p>
+  <form method="post" action="/btw/indienen">
+    <input type="hidden" name="jaar" value="{{ jaar }}">
+    <input type="hidden" name="kwartaal" value="{{ kwartaal }}">
+    <div class="rij">
+      <div class="breed"><label>Notitie (optioneel)</label><input name="notities"></div>
+      <div><label>&nbsp;</label><button type="submit">Markeer als ingediend</button></div>
+    </div>
+  </form>
+{% endif %}
+
+<h2>Vorige kwartalen</h2>
+<table>
+  <thead>
+    <tr><th>Periode</th><th class="bedrag">1a omzet</th><th class="bedrag">Verschuldigd</th>
+      <th class="bedrag">Voorbelasting</th><th class="bedrag">Saldo</th></tr>
+  </thead>
+  <tbody>
+    {% for eerder in historie %}
+    <tr>
+      <td><a href="/btw?jaar={{ eerder.jaar }}&kwartaal={{ eerder.kwartaal }}">{{ eerder.kwartaal }}e kw. {{ eerder.jaar }}</a></td>
+      <td class="bedrag">{{ eerder.rubrieken[Rubriek.R1A].omzet_cents | euro }}</td>
+      <td class="bedrag">{{ eerder.verschuldigd_cents | euro }}</td>
+      <td class="bedrag">{{ eerder.voorbelasting_cents | euro }}</td>
+      <td class="bedrag">{{ eerder.saldo_cents | euro }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

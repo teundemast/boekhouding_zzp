@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<div class="kaarten">
+  <div class="kaart">
+    <div class="label">Omzet {{ jaar }}</div>
+    <div class="waarde">{{ omzet_jaar | euro }}</div>
+    <div class="bij">kosten {{ kosten_jaar | euro }}</div>
+  </div>
+  <div class="kaart">
+    <div class="label">Winst {{ jaar }}</div>
+    <div class="waarde">{{ winst_jaar | euro }}</div>
+    <div class="bij">indicatief, voor ondernemersaftrek</div>
+  </div>
+  <div class="kaart">
+    <div class="label">Reserveren voor belasting</div>
+    <div class="waarde">{{ reservering_cents | euro }}</div>
+    <div class="bij">
+      <a href="#belasting">{{ schatting.effectief_tarief_pct }}% van de winst</a> &middot; schatting
+    </div>
+  </div>
+  <div class="kaart">
+    <div class="label">Openstaand</div>
+    <div class="waarde">{{ openstaand_totaal | euro }}</div>
+    <div class="bij">
+      {% if te_laat %}<strong>{{ te_laat | length }} te laat</strong>{% else %}niets te laat{% endif %}
+    </div>
+  </div>
+  <div class="kaart">
+    <div class="label">Btw {{ kwartaal }}e kwartaal (tot nu toe)</div>
+    <div class="waarde">{{ aangifte.saldo_cents | abs | euro }}</div>
+    <div class="bij">{{ "te betalen" if aangifte.te_betalen else "terug te vragen" }}</div>
+  </div>
+  <div class="kaart">
+    <div class="label">Uren {{ jaar }}</div>
+    <div class="waarde">{{ uren_jaar_milli | aantal }}</div>
+    <div class="bij">van {{ urencriterium }} voor het urencriterium</div>
+    <div class="balk">
+      <span style="width: {{ [(uren_jaar_milli / 1000 / urencriterium * 100) | round(1), 100] | min }}%"></span>
+    </div>
+  </div>
+</div>
+
+<h2>Omzet per maand in {{ jaar }}</h2>
+{% set piek = maandomzet | map(attribute=1) | max %}
+<div class="staafjes">
+  {% for maand, bedrag in maandomzet %}
+    <div style="height: {{ (bedrag / piek * 100) if piek else 0 }}%" title="{{ maand }}: {{ bedrag | euro }}"></div>
+  {% endfor %}
+</div>
+<div class="staafjes-labels">
+  {% for maand, bedrag in maandomzet %}<div>{{ maand }}</div>{% endfor %}
+</div>
+
+<h2>Wacht op jou</h2>
+{% set open_punten = aangifte.checklist | rejectattr("ok") | list %}
+{% if open_punten %}
+  {% for punt in open_punten %}
+    <div class="melding let-op">{{ punt.tekst }} &mdash; <span class="zacht">{{ punt.detail }}</span></div>
+  {% endfor %}
+{% else %}
+  <div class="melding goed">Niets open. De administratie is bij.</div>
+{% endif %}
+
+{% for punt in aangifte.aandachtspunten %}
+  <div class="melding let-op">{{ punt }}</div>
+{% endfor %}
+
+<h2 id="belasting">Hoe die reservering berekend is</h2>
+<p class="uitleg">
+  De tabel rekent een <strong>heel jaar</strong> door, op basis van een verwachte
+  jaarwinst van {{ verwachte_winst_cents | euro }} ({{ winst_jaar | euro }} tot nu toe,
+  doorgerekend naar 12 maanden). Onderaan staat welk deel daarvan hoort bij de winst die
+  je nu al gemaakt hebt &mdash; dat is het bedrag op de kaart bovenaan.
+</p>
+
+{% if cijfers_onzeker %}
+  <div class="melding let-op">
+    De belastingcijfers voor {{ jaar }} staan nog niet als geverifieerd in
+    <code>app/taxyears.py</code>. Behandel dit als een ruwe indicatie.
+  </div>
+{% endif %}
+{% for waarschuwing in schatting.waarschuwingen %}
+  <div class="melding let-op">{{ waarschuwing }}</div>
+{% endfor %}
+
+<table>
+  <tbody>
+    {% for regel in schatting.regels %}
+    <tr {% if regel.label in ["Belastbare winst", "Totaal over het hele jaar"] %}class="totaal"{% endif %}>
+      <td>
+        {{ regel.label }}
+        {% if regel.toelichting %}<div class="zacht">{{ regel.toelichting }}</div>{% endif %}
+      </td>
+      <td class="bedrag">{{ regel.bedrag_cents | euro }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="totaal">
+      <td>
+        Nu al reserveren
+        <div class="zacht">
+          het deel dat hoort bij de {{ winst_jaar | euro }} winst die je tot nu toe
+          gemaakt hebt
+        </div>
+      </td>
+      <td class="bedrag">{{ reservering_cents | euro }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="melding info">
+  <strong>Dit is een schatting, geen belastingadvies.</strong> Er is gerekend met alleen
+  je winst uit onderneming: geen ander inkomen, geen fiscale partner, geen hypotheekrente,
+  lijfrente of giften, en geen box 2 of box 3. De btw-bedragen elders in dit programma
+  zijn wel exact.
+  {% if not urencriterium_gehaald %}
+    Je hebt dit jaar nog geen {{ urencriterium }} uur geboekt, dus er is
+    <strong>geen</strong> zelfstandigenaftrek meegerekend.
+  {% endif %}
+</div>
+
+<h2>Openstaande facturen</h2>
+{% if openstaand %}
+<table>
+  <thead>
+    <tr>
+      <th>Nummer</th><th>Klant</th><th>Datum</th><th>Vervalt</th>
+      <th class="bedrag">Openstaand</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for factuur in openstaand %}
+    <tr>
+      <td><a href="/facturen/{{ factuur.id }}">{{ factuur.nummer }}</a></td>
+      <td>{{ factuur.client.naam }}</td>
+      <td>{{ factuur.datum | datum }}</td>
+      <td>{{ factuur.vervaldatum | datum }}</td>
+      <td class="bedrag">{{ factuur.openstaand_cents | euro }}</td>
+      <td>{% if factuur.is_overdue %}<span class="label-status te-laat">te laat</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="zacht">Geen openstaande facturen.</p>
+{% endif %}
+
+{% endblock %}

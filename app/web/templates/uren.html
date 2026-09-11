@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<div class="kaarten">
+  <div class="kaart">
+    <div class="label">Totaal {{ jaar }}</div>
+    <div class="waarde">{{ totaal_milli | aantal }}</div>
+    <div class="bij">van {{ urencriterium }} voor het urencriterium</div>
+    <div class="balk">
+      <span style="width: {{ [(totaal_milli / 1000 / urencriterium * 100) | round(1), 100] | min }}%"></span>
+    </div>
+  </div>
+  <div class="kaart">
+    <div class="label">Declarabel</div>
+    <div class="waarde">{{ declarabel_milli | aantal }}</div>
+    <div class="bij">niet-declarabele uren tellen wel mee voor het urencriterium</div>
+  </div>
+  <div class="kaart">
+    <div class="label">Nog te factureren</div>
+    <div class="waarde">{{ ongefactureerd_milli | aantal }}</div>
+  </div>
+</div>
+
+<fieldset>
+  <legend>Uren boeken</legend>
+  <form method="post" action="/uren/nieuw">
+    <div class="rij">
+      <div class="smal"><label>Datum</label><input type="date" name="datum" value="{{ vandaag }}" required></div>
+      <div><label>Project</label>
+        <select name="project_id">
+          <option value="">(geen project)</option>
+          {% for project in projecten %}
+            <option value="{{ project.id }}">{{ project.client.naam }} &mdash; {{ project.code }}</option>
+          {% endfor %}
+        </select></div>
+      <div class="smal"><label>Uren</label><input name="uren" value="8" required></div>
+      <div class="breed"><label>Omschrijving</label><input name="omschrijving"></div>
+      <div class="smal"><label>Declarabel</label>
+        <input type="checkbox" name="declarabel" value="1" checked></div>
+      <div class="smal"><label>&nbsp;</label><button type="submit">Boeken</button></div>
+    </div>
+  </form>
+</fieldset>
+
+<fieldset>
+  <legend>Factuur maken uit uren</legend>
+  <form method="post" action="/facturen/uit-uren">
+    <div class="rij">
+      <div><label>Klant</label>
+        <select name="client_id" required>
+          {% for klant in klanten %}<option value="{{ klant.id }}">{{ klant.naam }}</option>{% endfor %}
+        </select></div>
+      <div class="smal"><label>Van</label><input type="date" name="van" required></div>
+      <div class="smal"><label>Tot en met</label><input type="date" name="tot" required></div>
+      <div class="smal"><label>Uw kenmerk</label><input name="uw_kenmerk"></div>
+      <div class="smal"><label>&nbsp;</label><button type="submit">Concept maken</button></div>
+    </div>
+  </form>
+  <p class="zacht">
+    Eén regel per project, met de opgetelde uren als aantal. De uren worden aan de
+    factuur gekoppeld en kunnen daarna niet nog een keer gefactureerd worden.
+  </p>
+</fieldset>
+
+<h2>Per project</h2>
+<table>
+  <thead><tr><th>Project</th><th class="bedrag">Uren</th><th class="bedrag">Omzet</th></tr></thead>
+  <tbody>
+    {% for code, regel in per_project.items() %}
+    <tr>
+      <td>{{ code }}</td>
+      <td class="bedrag">{{ regel.uren_milli | aantal }}</td>
+      <td class="bedrag">{{ regel.omzet_cents | euro }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="zacht">Nog geen uren geboekt.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Geboekte uren</h2>
+<table>
+  <thead>
+    <tr><th>Datum</th><th>Project</th><th>Omschrijving</th><th class="bedrag">Uren</th>
+      <th>Declarabel</th><th>Gefactureerd</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for entry in entries %}
+    <tr>
+      <td>{{ entry.datum | datum }}</td>
+      <td>{{ entry.project.code if entry.project else "-" }}</td>
+      <td>{{ entry.omschrijving }}</td>
+      <td class="bedrag">{{ entry.uren_milli | aantal }}</td>
+      <td class="zacht">{{ "ja" if entry.declarabel else "nee" }}</td>
+      <td>{% if entry.invoice_id %}<a href="/facturen/{{ entry.invoice_id }}">factuur</a>{% else %}<span class="zacht">nee</span>{% endif %}</td>
+      <td>
+        {% if not entry.invoice_id %}
+        <form class="inline" method="post" action="/uren/{{ entry.id }}/verwijderen">
+          <button class="gevaar klein" type="submit">x</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="zacht">Nog geen uren geboekt in {{ jaar }}.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

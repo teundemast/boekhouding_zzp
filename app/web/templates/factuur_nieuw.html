@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<form method="post" action="/facturen/nieuw">
+  <fieldset>
+    <legend>Nieuwe factuur</legend>
+    <div class="rij">
+      <div class="breed"><label>Klant</label>
+        <select name="client_id" required>
+          {% for klant in klanten %}<option value="{{ klant.id }}">{{ klant.naam }}</option>{% endfor %}
+        </select></div>
+      <div class="smal"><label>Datum</label>
+        <input type="date" name="datum" value="{{ vandaag }}" required></div>
+      <div><label>Uw kenmerk</label><input name="uw_kenmerk" placeholder="bv. FEB"></div>
+      <div><label>Prestatiedatum of -periode</label>
+        <input name="prestatie_omschrijving" placeholder="bv. februari 2026"></div>
+    </div>
+    <button type="submit">Aanmaken</button>
+  </fieldset>
+</form>
+
+<p class="zacht">
+  Sneller: open een eerdere factuur voor dezelfde klant en kies <em>Dupliceren</em>.
+</p>
+
+{% endblock %}

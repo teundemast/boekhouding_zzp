@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<fieldset>
+  <legend>Kostenpost toevoegen</legend>
+  <form method="post" action="/kosten/nieuw" enctype="multipart/form-data">
+    <div class="rij">
+      <div class="smal"><label>Datum</label><input type="date" name="datum" value="{{ vandaag }}" required></div>
+      <div><label>Leverancier</label><input name="leverancier" required></div>
+      <div class="breed"><label>Omschrijving</label><input name="omschrijving"></div>
+      <div class="smal"><label>Factuurnr.</label><input name="factuurnummer"></div>
+    </div>
+    <div class="rij">
+      <div><label>Categorie</label>
+        <select name="category_id">
+          <option value="">-</option>
+          {% for categorie in categorieen %}
+            <option value="{{ categorie.id }}">{{ categorie.naam }}{% if categorie.aftrekbaar_permille < 1000 %} ({{ categorie.aftrekbaar_permille | permille }} aftrekbaar){% endif %}</option>
+          {% endfor %}
+        </select></div>
+      <div class="smal"><label>Bedrag excl btw</label><input name="bedrag_excl" value="0,00" required></div>
+      <div><label>Btw-behandeling</label>
+        <select name="btw_behandeling">
+          {% for waarde, label in btw_opties %}<option value="{{ waarde }}">{{ label }}</option>{% endfor %}
+        </select></div>
+      <div class="smal"><label>Btw (leeg = uit tarief)</label><input name="btw" placeholder="auto"></div>
+      <div class="smal"><label>Zakelijk %</label><input name="zakelijk_procent" value="100"></div>
+      <div><label>Bon of factuur</label><input type="file" name="document"></div>
+    </div>
+    <button type="submit">Boeken</button>
+  </form>
+</fieldset>
+
+{% if inbox %}
+<h2>Inbox &mdash; nog niet geboekt</h2>
+<table>
+  <tbody>
+    {% for document in inbox %}
+    <tr>
+      <td><a href="/kosten/inbox/{{ document.id }}">{{ document.bestandsnaam }}</a></td>
+      <td class="zacht">{{ document.ontvangen_op | datum }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+<form method="post" action="/kosten/inbox/scannen">
+  <button class="secundair klein" type="submit">Inbox-map opnieuw scannen</button>
+</form>
+
+<h2>Geboekte kosten</h2>
+<form method="get" action="/kosten" class="rij">
+  <div class="smal"><label>Jaar</label><input type="number" name="jaar" value="{{ jaar }}"></div>
+  <div class="smal"><label>Kwartaal</label>
+    <select name="kwartaal">
+      <option value="">heel jaar</option>
+      {% for k in [1,2,3,4] %}<option value="{{ k }}" {{ "selected" if kwartaal == k|string }}>{{ k }}</option>{% endfor %}
+    </select></div>
+  <div class="smal"><label>&nbsp;</label><button class="secundair" type="submit">Filter</button></div>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Datum</th><th>Leverancier</th><th>Omschrijving</th><th>Categorie</th>
+      <th class="bedrag">Excl btw</th><th class="bedrag">Btw aftrekbaar</th>
+      <th>Behandeling</th><th>Bon</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for post in kosten %}
+    <tr>
+      <td>{{ post.datum | datum }}</td>
+      <td>{{ post.leverancier }}</td>
+      <td>{{ post.omschrijving }}
+        {% if post.zakelijk_permille < 1000 %}<span class="zacht">({{ post.zakelijk_permille | permille }} zakelijk)</span>{% endif %}</td>
+      <td class="zacht">{{ post.category.naam if post.category else "-" }}</td>
+      <td class="bedrag">{{ post.bedrag_excl_cents | euro }}</td>
+      <td class="bedrag">{{ post.aftrekbare_btw_cents | euro }}</td>
+      <td class="zacht">{{ post.btw_behandeling }}</td>
+      <td>{% if post.document_pad %}<a href="/kosten/{{ post.id }}/bijlage">bon</a>{% else %}<span class="zacht">ontbreekt</span>{% endif %}</td>
+      <td>
+        <form class="inline" method="post" action="/kosten/{{ post.id }}/verwijderen">
+          <button class="gevaar klein" type="submit">x</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" class="zacht">Nog geen kosten geboekt.</td></tr>
+    {% endfor %}
+    {% if kosten %}
+    <tr class="totaal">
+      <td colspan="4">Totaal</td>
+      <td class="bedrag">{{ totaal_excl | euro }}</td>
+      <td class="bedrag">{{ totaal_btw | euro }}</td>
+      <td colspan="3"></td>
+    </tr>
+    {% endif %}
+  </tbody>
+</table>
+
+{% endblock %}

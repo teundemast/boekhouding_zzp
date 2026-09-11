@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<div class="melding let-op">
+  Dit bedrag ({{ kosten.bedrag_excl_cents | euro }}) ligt op of boven de investeringsgrens
+  van {{ grens_cents | euro }}. Zo'n aanschaf boek je niet in één keer als kosten, maar
+  activeer je en schrijf je over meerdere jaren af.
+</div>
+
+<form method="post" action="/kosten/{{ kosten.id }}/activeren">
+  <fieldset>
+    <legend>{{ kosten.leverancier }} &mdash; {{ kosten.omschrijving }}</legend>
+    <div class="rij">
+      <div class="smal"><label>Afschrijftermijn (jaren)</label>
+        <input type="number" name="termijn" value="5" min="1"></div>
+      <div class="smal"><label>Restwaarde</label><input name="restwaarde" value="0,00"></div>
+    </div>
+    <button type="submit" name="activeren" value="ja">Activeren en afschrijven</button>
+    <button type="submit" name="activeren" value="nee" class="secundair">
+      Toch in één keer als kosten boeken
+    </button>
+  </fieldset>
+</form>
+
+{% endblock %}

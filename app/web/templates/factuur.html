@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block inhoud %}
+
+<p class="uitleg">
+  {{ factuur.client.naam }} &middot;
+  <span class="label-status {{ factuur.status }}">{{ factuur.status }}</span>
+  {% if factuur.is_creditfactuur %} &middot; creditfactuur{% if factuur.crediteert %} voor {{ factuur.crediteert.nummer }}{% endif %}{% endif %}
+  {% if not factuur.nummer %} &middot; krijgt nummer <strong>{{ volgend_nummer }}</strong>{% endif %}
+</p>
+
+{% if kwartaal_vergrendeld %}
+  <div class="melding let-op">
+    Het btw-kwartaal van deze datum is al ingediend. Een nieuwe factuur in deze periode
+    telt als correctie op een ingediende aangifte.
+  </div>
+{% endif %}
+
+<fieldset>
+  <legend>Gegevens</legend>
+  <form method="post" action="/facturen/{{ factuur.id }}/kop">
+    <div class="rij">
+      <div class="smal"><label>Datum</label>
+        <input type="date" name="datum" value="{{ factuur.datum }}" {{ "disabled" if factuur.is_final }}></div>
+      <div class="smal"><label>Betaaltermijn (dagen)</label>
+        <input type="number" name="betaaltermijn_dagen" value="{{ factuur.betaaltermijn_dagen }}" {{ "disabled" if factuur.is_final }}></div>
+      <div><label>Uw kenmerk</label>
+        <input name="uw_kenmerk" value="{{ factuur.uw_kenmerk }}" {{ "disabled" if factuur.is_final }}></div>
+      <div><label>Prestatiedatum of -periode</label>
+        <input name="prestatie_omschrijving" value="{{ factuur.prestatie_omschrijving }}" {{ "disabled" if factuur.is_final }}></div>
+      <div class="smal"><label>Taal</label>
+        <select name="taal" {{ "disabled" if factuur.is_final }}>
+          <option value="nl" {{ "selected" if factuur.taal == "nl" }}>Nederlands</option>
+          <option value="en" {{ "selected" if factuur.taal == "en" }}>Engels</option>
+        </select></div>
+    </div>
+    {% if not factuur.is_final %}<button type="submit" class="secundair">Opslaan</button>{% endif %}
+  </form>
+</fieldset>
+
+<h2>Regels</h2>
+<table>
+  <thead>
+    <tr>
+      <th class="bedrag" style="width:5rem">Aantal</th><th style="width:7rem">Code</th>
+      <th>Omschrijving</th><th class="bedrag">Stuksprijs</th>
+      <th class="bedrag">Totaal</th><th>Btw</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for regel in factuur.regels %}
+    <tr>
+      <td class="bedrag">{{ regel.aantal_milli | aantal }}</td>
+      <td>{{ regel.code }}</td>
+      <td>{{ regel.omschrijving }}</td>
+      <td class="bedrag">{{ regel.stuksprijs_cents | euro }}</td>
+      <td class="bedrag">{{ regel.totaal_cents | euro }}</td>
+      <td class="zacht">{{ regel.btw_behandeling }}</td>
+      <td>
+        {% if not factuur.is_final %}
+        <form class="inline" method="post" action="/facturen/{{ factuur.id }}/regel/{{ regel.id }}/verwijderen">
+          <button class="gevaar klein" type="submit">x</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if not factuur.is_final %}
+<fieldset>
+  <legend>Regel toevoegen</legend>
+  <form method="post" action="/facturen/{{ factuur.id }}/regel">
+    <div class="rij">
+      <div class="smal"><label>Aantal</label><input name="aantal" value="1"></div>
+      <div class="smal"><label>Code</label><input name="code"></div>
+      <div class="breed"><label>Omschrijving</label><input name="omschrijving"></div>
+      <div class="smal"><label>Stuksprijs</label><input name="stuksprijs" value="0,00"></div>
+      <div><label>Btw</label>
+        <select name="btw_behandeling">
+          {% for waarde, label in btw_opties %}<option value="{{ waarde }}">{{ label }}</option>{% endfor %}
+        </select></div>
+      <div class="smal"><label>&nbsp;</label><button type="submit">Toevoegen</button></div>
+    </div>
+  </form>
+</fieldset>
+{% endif %}
+
+<h2>Totalen</h2>
+<table>
+  <tbody>
+    <tr><td>Totaal excl btw</td><td class="bedrag">{{ totalen.subtotaal_cents | euro }}</td></tr>
+    {% for groep in totalen.groepen %}
+    <tr>
+      <td>
+        {% if groep.tarief_permille %}Btw {{ groep.tarief_permille | permille }}{% else %}{{ groep.label }}{% endif %}
+        ({{ groep.grondslag_cents | euro }})
+      </td>
+      <td class="bedrag">{{ groep.btw_cents | euro }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="totaal"><td>Totaal te betalen</td><td class="bedrag">{{ totalen.totaal_cents | euro }}</td></tr>
+    {% if factuur.betaald_cents %}
+    <tr><td>Betaald</td><td class="bedrag">{{ factuur.betaald_cents | euro }}</td></tr>
+    <tr><td>Openstaand</td><td class="bedrag">{{ factuur.openstaand_cents | euro }}</td></tr>
+    {% endif %}
+  </tbody>
+</table>
+
+{% if problemen %}
+  <div class="melding let-op">
+    Nog niet klaar om definitief te maken:
+    <ul>{% for probleem in problemen %}<li>{{ probleem }}</li>{% endfor %}</ul>
+  </div>
+{% endif %}
+
+<h2>Acties</h2>
+<p>
+  <a class="knop secundair" href="/facturen/{{ factuur.id }}/pdf">
+    {{ "Pdf" if factuur.is_final else "Concept-pdf bekijken" }}
+  </a>
+
+  {% if not factuur.is_final %}
+    <form class="inline" method="post" action="/facturen/{{ factuur.id }}/definitief">
+      <button type="submit" {{ "disabled" if problemen }}>Definitief maken</button>
+    </form>
+    <form class="inline" method="post" action="/facturen/{{ factuur.id }}/verwijderen">
+      <button class="gevaar" type="submit">Concept verwijderen</button>
+    </form>
+  {% else %}
+    <form class="inline" method="post" action="/facturen/{{ factuur.id }}/dupliceren">
+      <button class="secundair" type="submit">Dupliceren</button>
+    </form>
+    {% if not factuur.is_creditfactuur %}
+    <form class="inline" method="post" action="/facturen/{{ factuur.id }}/crediteren">
+      <button class="secundair" type="submit">Crediteren</button>
+    </form>
+    {% endif %}
+  {% endif %}
+</p>
+
+{% if factuur.is_final and factuur.openstaand_cents > 0 %}
+<fieldset>
+  <legend>Betaling registreren</legend>
+  <form method="post" action="/facturen/{{ factuur.id }}/betaling">
+    <div class="rij">
+      <div class="smal"><label>Bedrag</label>
+        <input name="bedrag" value="{{ factuur.openstaand_cents | euro_kaal }}"></div>
+      <div class="smal"><label>Datum</label>
+        <input type="date" name="datum" value="{{ factuur.datum }}"></div>
+      <div class="smal"><label>&nbsp;</label><button type="submit">Registreren</button></div>
+    </div>
+  </form>
+</fieldset>
+{% endif %}
+
+<p><a href="/facturen">&larr; Alle facturen</a></p>
+{% endblock %}
