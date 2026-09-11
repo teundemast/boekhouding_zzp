@@ -238,13 +238,6 @@ Bankafschriften importeren en afletteren, het jaaroverzicht voor de IB, offertes
 terugkerende facturen, en de betaal-QR op de factuur. Het datamodel houdt er al rekening
 mee; de schermen ontbreken nog.
 
-## Hoe dit gebouwd is
-
-[`docs/PROMPT.md`](docs/PROMPT.md) is de opdracht waarmee dit programma gebouwd is: wat
-het moet kunnen, welke belastingregels er gelden, en wat er expliciet níét in moet. Dat
-bestand staat er bewust nog in: het leest als de specificatie, het legt uit waarom sommige
-dingen zo zijn, en een deel ervan is nog niet gebouwd &mdash; zie *Nog niet gebouwd*.
-
 ## Licentie en aansprakelijkheid
 
 MIT, zie [`LICENSE`](LICENSE). Doe ermee wat je wilt.
