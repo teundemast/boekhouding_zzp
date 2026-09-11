@@ -44,7 +44,7 @@ boekhouding = "boekhouding.cli:main"
 boekhouding-backup = "boekhouding.backup:main"
 
 [tool.setuptools.packages.find]
-include = ["boekhouding*"]
+where = ["src"]
 
 [tool.setuptools.package-data]
 boekhouding = ["web/templates/*.html", "web/static/*.css"]

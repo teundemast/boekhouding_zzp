@@ -1,5 +1,7 @@
 # Boekhouding
 
+[![tests](https://github.com/teundemast/boekhouding_zzp/actions/workflows/tests.yml/badge.svg)](https://github.com/teundemast/boekhouding_zzp/actions/workflows/tests.yml)
+
 Een boekhoudprogramma voor één Nederlandse ZZP'er, dat lokaal op mijn eigen machine
 draait. Geen cloud, geen accounts, geen abonnement. Facturen maken, kosten boeken, elk
 kwartaal de btw-aangifte, en aan het eind van het jaar de cijfers voor de
@@ -208,7 +210,7 @@ repository staat.
 ## Opbouw
 
 ```
-boekhouding/
+src/boekhouding/
   money.py        centen, Nederlandse notatie, afronding
   vat.py          btw-behandelingen en hun rubriek in de aangifte
   taxyears.py     tarieven en drempels per jaar
@@ -218,7 +220,13 @@ boekhouding/
   web/            FastAPI-routes en Jinja-templates
   cli.py          het boekhouding-commando
   backup.py       het boekhouding-backup-commando
+tests/            pytest
+docs/PROMPT.md    de opdracht waarmee dit gebouwd is
 ```
+
+De code staat in `src/` en niet los in de wortel, zodat de tests het pakket importeren
+zoals het geïnstalleerd is en niet per ongeluk de map ernaast. Dat betekent wel dat
+`pip install -e .` eerst moet gebeuren voordat `pytest` iets kan vinden.
 
 Er is bewust **geen grootboek met journaalposten**: voor een eenmanszaak is een
 gecategoriseerde lijst van inkomsten en uitgaven genoeg, zolang de kwartaal- en
@@ -232,10 +240,10 @@ mee; de schermen ontbreken nog.
 
 ## Hoe dit gebouwd is
 
-[`PROMPT.md`](PROMPT.md) is de opdracht waarmee dit programma gebouwd is: wat het moet
-kunnen, welke belastingregels er gelden, en wat er expliciet níét in moet. Dat bestand
-staat er bewust nog in. Het leest als de specificatie, het legt uit waarom sommige dingen
-zo zijn, en een deel ervan is nog niet gebouwd &mdash; zie *Nog niet gebouwd*.
+[`docs/PROMPT.md`](docs/PROMPT.md) is de opdracht waarmee dit programma gebouwd is: wat
+het moet kunnen, welke belastingregels er gelden, en wat er expliciet níét in moet. Dat
+bestand staat er bewust nog in: het leest als de specificatie, het legt uit waarom sommige
+dingen zo zijn, en een deel ervan is nog niet gebouwd &mdash; zie *Nog niet gebouwd*.
 
 ## Licentie en aansprakelijkheid
 
