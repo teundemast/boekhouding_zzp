@@ -10,38 +10,51 @@ heeft. Het rekent met **Nederlandse** belastingregels en is gebouwd rond hoe é�
 eenmanszaak werkt; daarbuiten heb je er niets aan. Er is geen support en geen garantie,
 zie [Licentie en aansprakelijkheid](#licentie-en-aansprakelijkheid). Fork hem gerust.
 
-## Starten
+## Installeren
 
-Dubbelklik **`Boekhouding.cmd`**. De browser gaat open op <http://127.0.0.1:8777>.
-
-De eerste keer duurt dat een minuut of twee: het programma installeert dan zichzelf.
-Heb je nog geen Python, dan legt de starter uit hoe je dat installeert. Daarna kom je op
-het instellingenscherm, waar je je eigen bedrijfsgegevens invult &mdash; die staan
-bewust niet in de code, zodat niemand per ongeluk met andermans IBAN of btw-nummer
-factureert. Zolang bedrijfsnaam, adres, btw-nummer, KvK en IBAN ontbreken kun je wel
-alles klaarzetten, maar geen factuur definitief maken.
-
-Zolang dat zwarte venster open staat, draait het programma. Sluit je het venster, dan
-sluit je de boekhouding af. Je hoeft het dus niet permanent te laten draaien: start het
-wanneer je facturen maakt of de aangifte doet, en sluit het daarna weer.
-
-Vanaf de opdrachtregel kan ook:
+Je hebt Python 3.12 of nieuwer nodig, en een terminal.
 
 ```powershell
-.\start.ps1
+git clone https://github.com/teundemast/boekhouding_zzp.git
+cd boekhouding_zzp
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-De eerste keer maakt dit een virtuele omgeving aan en installeert het de afhankelijkheden.
+Laat `[dev]` weg als je de tests niet hoeft te draaien. Alle versies staan vastgepind in
+`pyproject.toml`: dit rekent met belastinggeld, en een stille upgrade die anders afrondt
+is niet iets wat je wil ontdekken na het indienen van een aangifte. Gebruik je
+[uv](https://docs.astral.sh/uv/), dan werkt `uv run boekhouding` ook &mdash; die leest
+dezelfde `pyproject.toml`.
+
+## Starten
+
+```powershell
+.\.venv\Scripts\boekhouding.exe
+```
+
+De browser gaat open op <http://127.0.0.1:8777>. Zolang dat terminalvenster open staat,
+draait het programma; sluit je het venster (of Ctrl+C), dan sluit je de boekhouding af. Je
+hoeft het dus niet permanent te laten draaien: start het wanneer je facturen maakt of de
+aangifte doet, en sluit het daarna weer.
+
+De eerste keer kom je op het instellingenscherm, waar je je eigen bedrijfsgegevens invult
+&mdash; die staan bewust niet in de code, zodat niemand per ongeluk met andermans IBAN of
+btw-nummer factureert. Zolang bedrijfsnaam, adres, btw-nummer, KvK en IBAN ontbreken kun
+je wel alles klaarzetten, maar geen factuur definitief maken.
 
 Wil je vanaf je telefoon een bonnetje kunnen fotograferen:
 
 ```powershell
-.\start.ps1 --lan
+.\.venv\Scripts\boekhouding.exe --lan
 ```
 
 Let op: met `--lan` is de boekhouding bereikbaar voor alles op hetzelfde netwerk, zonder
 wachtwoord. Doe dat op je eigen netwerk thuis, niet op de wifi van een hotel of een
 klant.
+
+`python -m boekhouding` doet precies hetzelfde, als je dat liever typt. Met `--poort` kies
+je een andere poort en met `--geen-browser` blijft de browser dicht.
 
 ## Waar staan mijn gegevens
 
@@ -70,23 +83,12 @@ verplaats de map naar `Boekhouding` in je gebruikersmap.
 Een andere locatie, bijvoorbeeld een tweede schijf: zet `BOEKHOUDING_DATA` voordat je
 start.
 
-### Aan iemand anders geven
-
-```powershell
-.\.venv\Scripts\python.exe -m tools.maak_zip
-```
-
-Maakt een zip naast de projectmap: de code en de licentie, zonder git-historie, zonder
-virtuele omgeving en zonder administratie. Voor het inpakken controleert het script of er geen
-btw-nummers, IBANs, e-mailadressen of telefoonnummers in de code staan, en weigert het
-anders. De ontvanger pakt uit en dubbelklikt `Boekhouding.cmd`.
-
 ### Back-up
 
 ```powershell
-.\.venv\Scripts\python.exe -m tools.backup            # één zip met alles
-.\.venv\Scripts\python.exe -m tools.backup --export   # plus alles als losse CSV
-.\.venv\Scripts\python.exe -m tools.backup --restore <zip> <lege map>
+.\.venv\Scripts\boekhouding-backup.exe                      # één zip met alles
+.\.venv\Scripts\boekhouding-backup.exe --export             # plus alles als losse CSV
+.\.venv\Scripts\boekhouding-backup.exe --restore <zip> <lege map>
 ```
 
 De CSV-export staat er zodat dit programma mijn administratie nooit kan gijzelen: die
@@ -147,8 +149,9 @@ Heb je EU-klanten, dan staat de **ICP-opgaaf** eronder; die dien je apart in.
 
 ## Belastingcijfers
 
-Tarieven, drempels en aftrekposten staan in [`app/taxyears.py`](app/taxyears.py), met het
-jaar erbij, nooit los in de code. Elk jaar in januari controleren bij de Belastingdienst
+Tarieven, drempels en aftrekposten staan in
+[`boekhouding/taxyears.py`](boekhouding/taxyears.py), met het jaar erbij, nooit los in de
+code. Elk jaar in januari controleren bij de Belastingdienst
 en `verified=True` zetten. Zolang dat niet gebeurd is, noemt het programma alles wat
 ermee berekend wordt een schatting. **2026 is geverifieerd** tegen de bronnen die in dat
 bestand bij naam genoemd staan; de eerdere jaren nog niet.
@@ -156,8 +159,8 @@ bestand bij naam genoemd staan; de eerdere jaren nog niet.
 ### Wat er te reserveren valt
 
 Het dashboard rekent de hele keten door in
-[`app/services/income_tax.py`](app/services/income_tax.py), op basis van de verwachte
-jaarwinst (want de schijven en heffingskortingen zijn jaarbedragen):
+[`boekhouding/services/income_tax.py`](boekhouding/services/income_tax.py), op basis van
+de verwachte jaarwinst (want de schijven en heffingskortingen zijn jaarbedragen):
 
 ```
 winst uit onderneming
@@ -188,22 +191,24 @@ beginnen, geen belastingadvies.**
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m ruff check .
 ```
 
-166 tests. De belangrijkste zitten in
+165 tests. De belangrijkste zitten in
 [`tests/test_vat_return.py`](tests/test_vat_return.py): die lezen als de specificatie van
 wat dit programma over de Nederlandse btw gelooft, scenario voor scenario. Verder
 [`tests/test_money.py`](tests/test_money.py) voor afronding,
 [`tests/test_invoices.py`](tests/test_invoices.py) voor nummering en onveranderlijkheid,
 en [`tests/test_end_to_end.py`](tests/test_end_to_end.py) voor een heel kwartaal door de
 webinterface heen. De fixtures rekenen met verzonnen bedrijven:
-[`tests/test_no_personal_data.py`](tests/test_no_personal_data.py) faalt als er ergens een
-btw-nummer, IBAN, e-mailadres of telefoonnummer in de code belandt.
+[`tests/test_no_personal_data.py`](tests/test_no_personal_data.py) leest alles wat git
+bijhoudt en faalt als er een btw-nummer, IBAN, e-mailadres of telefoonnummer in de
+repository staat.
 
 ## Opbouw
 
 ```
-app/
+boekhouding/
   money.py        centen, Nederlandse notatie, afronding
   vat.py          btw-behandelingen en hun rubriek in de aangifte
   taxyears.py     tarieven en drempels per jaar
@@ -211,7 +216,8 @@ app/
   services/       invoices.py, expenses.py, vat_return.py  <- hier zit de logica
   pdf/            de factuur-pdf
   web/            FastAPI-routes en Jinja-templates
-tools/            run.py, backup.py, maak_zip.py
+  cli.py          het boekhouding-commando
+  backup.py       het boekhouding-backup-commando
 ```
 
 Er is bewust **geen grootboek met journaalposten**: voor een eenmanszaak is een
@@ -240,5 +246,6 @@ MIT-licentie zegt niet voor niets *without warranty of any kind*. Je blijft zelf
 verantwoordelijk voor je eigen aangifte. De btw-bedragen zijn exact bedoeld en getest,
 maar controleer ze de eerste keer met de hand tegen je eigen facturen. De
 inkomstenbelastingcijfers zijn een indicatie om mee te beginnen, geen belastingadvies.
-Tarieven en drempels veranderen elk jaar: kijk in [`app/taxyears.py`](app/taxyears.py) of
-het jaar dat jij gebruikt op `verified=True` staat.
+Tarieven en drempels veranderen elk jaar: kijk in
+[`boekhouding/taxyears.py`](boekhouding/taxyears.py) of het jaar dat jij gebruikt op
+`verified=True` staat.

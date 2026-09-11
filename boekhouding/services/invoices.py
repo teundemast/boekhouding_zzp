@@ -16,8 +16,8 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import money
-from app.models import (
+from boekhouding import money
+from boekhouding.models import (
     AuditLog,
     Client,
     Invoice,
@@ -27,7 +27,7 @@ from app.models import (
     Settings,
     TimeEntry,
 )
-from app.vat import SalesVat, sales_spec
+from boekhouding.vat import SalesVat, sales_spec
 
 
 class InvoiceLocked(Exception):
@@ -239,7 +239,7 @@ def finalise(session: Session, invoice: Invoice, force: bool = False) -> Invoice
 
     invoice.nummer = next_number(session, "factuur", invoice.datum)
     invoice.status = InvoiceStatus.DEFINITIEF
-    invoice.definitief_op = dt.datetime.now(dt.timezone.utc)
+    invoice.definitief_op = dt.datetime.now(dt.UTC)
     session.flush()
     audit(
         session,

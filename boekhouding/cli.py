@@ -1,6 +1,6 @@
 """Start the application.
 
-    python -m tools.run
+    boekhouding
 
 Binds to localhost by default. Pass --lan to also listen on the local network, which is
 what makes the document inbox reachable from a phone to photograph a receipt.
@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
 
     import uvicorn
 
-    from app import db
+    from boekhouding import db
 
     host = "0.0.0.0" if argumenten.lan else "127.0.0.1"
     adres = f"http://127.0.0.1:{argumenten.poort}"
@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     if not argumenten.geen_browser:
         webbrowser.open(adres)
 
-    uvicorn.run("app.web.main:app", host=host, port=argumenten.poort, log_level="warning")
+    uvicorn.run("boekhouding.web.main:app", host=host, port=argumenten.poort, log_level="warning")
     return 0
 
 

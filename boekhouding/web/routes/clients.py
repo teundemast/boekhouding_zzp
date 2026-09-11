@@ -6,14 +6,14 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
-from app import db
-from app.models import Client, Project
+from boekhouding import db
+from boekhouding.models import Client, Project
 
 router = APIRouter(prefix="/klanten", tags=["klanten"])
 
 
 def _templates():
-    from app.web.main import templates
+    from boekhouding.web.main import templates
 
     return templates
 
@@ -75,7 +75,7 @@ def opslaan(
     uurtarief: str = Form(""),
     notities: str = Form(""),
 ):
-    from app import money
+    from boekhouding import money
 
     with db.session_scope() as session:
         klant = session.get(Client, int(klant_id)) if klant_id else Client()
@@ -105,7 +105,7 @@ def verwijderen(klant_id: int):
     """Soft delete only: a client referenced by an invoice stays in the books forever."""
     with db.session_scope() as session:
         klant = session.get(Client, klant_id)
-        klant.deleted_at = dt.datetime.now(dt.timezone.utc)
+        klant.deleted_at = dt.datetime.now(dt.UTC)
     return RedirectResponse("/klanten", status_code=303)
 
 
@@ -118,7 +118,7 @@ def project_opslaan(
     uurtarief: str = Form("0"),
     btw_behandeling: str = Form("hoog_21"),
 ):
-    from app import money
+    from boekhouding import money
 
     with db.session_scope() as session:
         project = session.get(Project, int(project_id)) if project_id else Project(

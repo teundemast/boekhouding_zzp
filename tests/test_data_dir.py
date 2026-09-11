@@ -7,7 +7,7 @@ update leaves them looking at an empty administration.
 
 from __future__ import annotations
 
-from app import db
+from boekhouding import db
 
 
 class TestDefaultLocation:

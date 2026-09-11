@@ -18,17 +18,17 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import money
-from app.models import (
+from boekhouding import money
+from boekhouding.models import (
+    BankTransaction,
     Expense,
+    InboxDocument,
     Invoice,
     InvoiceStatus,
     Settings,
     VatFiling,
-    BankTransaction,
-    InboxDocument,
 )
-from app.vat import Rubriek, RUBRIEK_LABELS, purchase_spec, sales_spec
+from boekhouding.vat import RUBRIEK_LABELS, Rubriek, purchase_spec, sales_spec
 
 FINAL_STATUSES = (
     InvoiceStatus.DEFINITIEF,
@@ -221,7 +221,7 @@ def compute(session: Session, jaar: int, kwartaal: int) -> VatReturn:
     icp_totalen: dict[tuple[str, str], dict] = {}
 
     for invoice in invoices:
-        for behandeling, (tarief, grondslag, btw) in invoice.btw_per_tarief.items():
+        for behandeling, (_tarief, grondslag, btw) in invoice.btw_per_tarief.items():
             spec = sales_spec(behandeling)
             doel = Rubriek.R1E if kor else spec.rubriek
             regel = rubrieken[doel]
@@ -426,14 +426,14 @@ def _aandachtspunten(
     settings = Settings.get_or_create(session)
     if not settings.kor_actief:
         omzet = _jaaromzet_cents(session, jaar)
-        from app.taxyears import tax_year
+        from boekhouding.taxyears import tax_year
 
         grens = tax_year(jaar).kor_omzetgrens_cents
         if omzet < grens and omzet > 0:
             pass  # below the ceiling is normal; only warn when close while in the KOR
     else:
         omzet = _jaaromzet_cents(session, jaar)
-        from app.taxyears import tax_year
+        from boekhouding.taxyears import tax_year
 
         grens = tax_year(jaar).kor_omzetgrens_cents
         if omzet > grens:
@@ -451,7 +451,7 @@ def _aandachtspunten(
 
 def rubriek_bevat_vrijgesteld(session: Session, van: dt.date, tot: dt.date) -> int:
     """Turnover booked as vrijgesteld in the period, if any."""
-    from app.vat import SalesVat
+    from boekhouding.vat import SalesVat
 
     totaal = 0
     for invoice in session.scalars(
@@ -496,7 +496,10 @@ def _checklist(session: Session, van: dt.date, tot: dt.date) -> list[dict]:
         {
             "ok": not concepten,
             "tekst": f"{len(concepten)} conceptfactuur(en) met een datum in dit kwartaal",
-            "detail": "Een concept telt niet mee in de aangifte. Maak ze definitief of verwijder ze.",
+            "detail": (
+                "Een concept telt niet mee in de aangifte. "
+                "Maak ze definitief of verwijder ze."
+            ),
         }
     )
 
@@ -621,7 +624,7 @@ def corrections(session: Session, jaar: int, kwartaal: int) -> dict | None:
             )
 
     saldo_verschil = huidig.saldo_cents - filing.saldo_cents
-    from app.taxyears import tax_year
+    from boekhouding.taxyears import tax_year
 
     grens = tax_year(jaar).suppletie_grens_cents
     return {

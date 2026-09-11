@@ -6,18 +6,18 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
-from app import db, money
-from app.models import Client, Invoice, InvoiceLine, InvoiceStatus, Settings
-from app.pdf import invoice_pdf
-from app.services import invoices as svc
-from app.services import vat_return as btw_svc
-from app.vat import SALES_SPECS, SalesVat
+from boekhouding import db, money
+from boekhouding.models import Client, Invoice, InvoiceLine, Settings
+from boekhouding.pdf import invoice_pdf
+from boekhouding.services import invoices as svc
+from boekhouding.services import vat_return as btw_svc
+from boekhouding.vat import SALES_SPECS
 
 router = APIRouter(prefix="/facturen", tags=["facturen"])
 
 
 def _templates():
-    from app.web.main import templates
+    from boekhouding.web.main import templates
 
     return templates
 
@@ -247,7 +247,7 @@ def verwijderen(factuur_id: int):
                 "worden; maak een creditfactuur.",
                 status_code=303,
             )
-        invoice.deleted_at = dt.datetime.now(dt.timezone.utc)
+        invoice.deleted_at = dt.datetime.now(dt.UTC)
         svc.audit(session, "invoice", invoice.id, "concept verwijderd")
     return RedirectResponse("/facturen", status_code=303)
 

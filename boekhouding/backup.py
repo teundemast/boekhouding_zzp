@@ -1,8 +1,8 @@
 """One-command backup and export.
 
-    python -m tools.backup            -> a single zip of everything
-    python -m tools.backup --export   -> plain CSV of every table as well
-    python -m tools.backup --restore <zip> <doelmap>
+    boekhouding-backup            -> a single zip of everything
+    boekhouding-backup --export   -> plain CSV of every table as well
+    boekhouding-backup --restore <zip> <doelmap>
 
 The zip contains the database and every attachment and generated PDF. The CSV export
 exists so this application can never hold my administration hostage: those files are
@@ -14,13 +14,12 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
-import shutil
 import sqlite3
 import sys
 import zipfile
 from pathlib import Path
 
-from app import db
+from boekhouding import db
 
 
 def backup(doelmap: Path | None = None) -> Path:
@@ -95,7 +94,7 @@ def restore(archief_pad: Path, doelmap: Path) -> None:
     with zipfile.ZipFile(archief_pad) as archief:
         archief.extractall(doelmap)
     print(f"Teruggezet in {doelmap}")
-    print(f"Start met:  set BOEKHOUDING_DATA={doelmap}  en dan  python -m tools.run")
+    print(f"Start met:  set BOEKHOUDING_DATA={doelmap}  en dan  boekhouding")
 
 
 def main(argv: list[str] | None = None) -> int:

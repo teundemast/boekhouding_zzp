@@ -18,10 +18,10 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import simpleSplit
 from reportlab.pdfgen import canvas as pdfcanvas
 
-from app import money
-from app.models import Invoice, Settings
-from app.services.invoices import totals_summary
-from app.vat import sales_spec
+from boekhouding import money
+from boekhouding.models import Invoice, Settings
+from boekhouding.services.invoices import totals_summary
+from boekhouding.vat import sales_spec
 
 PAGE_W, PAGE_H = A4
 MARGIN = 56.0

@@ -5,15 +5,14 @@ from __future__ import annotations
 import datetime as dt
 import sqlite3
 import zipfile
-from pathlib import Path
 
 import pytest
 
-from app import db
-from app.models import Client, Invoice
-from app.services import invoices as svc
+from boekhouding import backup as backup_tool
+from boekhouding import db
+from boekhouding.models import Client
+from boekhouding.services import invoices as svc
 from tests.conftest import vul_bedrijfsgegevens
-from tools import backup as backup_tool
 
 
 @pytest.fixture()

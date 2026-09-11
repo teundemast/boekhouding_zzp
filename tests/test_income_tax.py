@@ -11,8 +11,8 @@ from decimal import Decimal
 
 import pytest
 
-from app.services import income_tax as ib
-from app.taxyears import tax_year
+from boekhouding.services import income_tax as ib
+from boekhouding.taxyears import tax_year
 
 JAAR = 2026
 

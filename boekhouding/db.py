@@ -101,7 +101,7 @@ def get_db() -> Iterator[Session]:
 
 
 def init_db() -> None:
-    from app import models  # noqa: F401  -- registers the mappings
+    from boekhouding import models  # noqa: F401  -- registers the mappings
 
     models.Base.metadata.create_all(get_engine())
     with session_scope() as session:

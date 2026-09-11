@@ -15,10 +15,10 @@ import datetime as dt
 
 import pytest
 
-from app.services import expenses as exp
-from app.services import invoices as svc
-from app.services import vat_return as btw
-from app.vat import PurchaseVat, Rubriek, SalesVat
+from boekhouding.services import expenses as exp
+from boekhouding.services import invoices as svc
+from boekhouding.services import vat_return as btw
+from boekhouding.vat import PurchaseVat, Rubriek, SalesVat
 
 Q1 = (2023, 1)
 

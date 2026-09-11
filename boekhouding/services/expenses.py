@@ -18,12 +18,12 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import money
-from app.db import DOCUMENTS_DIR
-from app.models import Asset, Expense, ExpenseCategory, InboxDocument
-from app.services.invoices import audit
-from app.taxyears import tax_year
-from app.vat import PurchaseVat, purchase_spec
+from boekhouding import money
+from boekhouding.db import DOCUMENTS_DIR
+from boekhouding.models import Asset, Expense, ExpenseCategory, InboxDocument
+from boekhouding.services.invoices import audit
+from boekhouding.taxyears import tax_year
+from boekhouding.vat import PurchaseVat, purchase_spec
 
 #: Categories with the deduction rules that actually differ for an eenmanszaak.
 STANDAARD_CATEGORIEEN = [

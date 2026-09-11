@@ -6,15 +6,15 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
-from app import db, money
-from app.models import Client, Project, TimeEntry
-from app.taxyears import tax_year
+from boekhouding import db, money
+from boekhouding.models import Client, Project, TimeEntry
+from boekhouding.taxyears import tax_year
 
 router = APIRouter(prefix="/uren", tags=["uren"])
 
 
 def _templates():
-    from app.web.main import templates
+    from boekhouding.web.main import templates
 
     return templates
 
@@ -118,5 +118,5 @@ def verwijderen(entry_id: int):
                 "/uren?fout=Deze uren zijn al gefactureerd en kunnen niet verwijderd worden.",
                 status_code=303,
             )
-        entry.deleted_at = dt.datetime.now(dt.timezone.utc)
+        entry.deleted_at = dt.datetime.now(dt.UTC)
     return RedirectResponse("/uren", status_code=303)

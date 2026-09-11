@@ -5,15 +5,15 @@ import datetime as dt
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 
-from app import db, money
-from app.services import vat_return as svc
-from app.vat import Rubriek
+from boekhouding import db, money
+from boekhouding.services import vat_return as svc
+from boekhouding.vat import Rubriek
 
 router = APIRouter(prefix="/btw", tags=["btw"])
 
 
 def _templates():
-    from app.web.main import templates
+    from boekhouding.web.main import templates
 
     return templates
 

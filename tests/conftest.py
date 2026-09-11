@@ -4,8 +4,8 @@ import datetime as dt
 
 import pytest
 
-from app import db
-from app.models import Client, ExpenseCategory, Project, Settings
+from boekhouding import db
+from boekhouding.models import Client, ExpenseCategory, Project, Settings
 
 
 def vul_bedrijfsgegevens(s) -> Settings:

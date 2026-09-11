@@ -32,8 +32,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app import money
-from app.taxyears import TaxYear, can_estimate_income_tax, tax_year
+from boekhouding import money
+from boekhouding.taxyears import TaxYear, can_estimate_income_tax, tax_year
 
 
 @dataclass(frozen=True)
@@ -103,7 +103,8 @@ def _credit(inkomen_cents: int, brackets: tuple) -> int:
         return 0
     for bovengrens, basis_cents, percentage, drempel_cents in brackets:
         if bovengrens is None or inkomen_cents <= bovengrens:
-            bedrag = Decimal(basis_cents) + Decimal(inkomen_cents - drempel_cents) * percentage / 100
+            afbouw = Decimal(inkomen_cents - drempel_cents) * percentage / 100
+            bedrag = Decimal(basis_cents) + afbouw
             return max(money.round_half_up(bedrag), 0)
     return 0
 
@@ -240,7 +241,9 @@ def estimate(
     totaal = inkomstenbelasting + zvw
     regels.append(Regel("Totaal over het hele jaar", totaal))
 
-    if belastbare_winst > (parameters.box1_brackets[-2][0] if len(parameters.box1_brackets) > 1 else 0):
+    schijven = parameters.box1_brackets
+    hoogste_schijfgrens = schijven[-2][0] if len(schijven) > 1 else 0
+    if belastbare_winst > hoogste_schijfgrens:
         waarschuwingen.append(
             "Boven de hoogste schijf telt de MKB-winstvrijstelling maar tegen 37,56% mee "
             "(tariefsaanpassing). Deze schatting houdt daar geen rekening mee en valt "

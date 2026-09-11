@@ -10,11 +10,11 @@ import datetime as dt
 
 import pytest
 
-from app.models import Settings
-from app.services import expenses as exp
-from app.services import invoices as svc
-from app.services import vat_return as btw
-from app.vat import PurchaseVat, Rubriek, SalesVat
+from boekhouding.models import Settings
+from boekhouding.services import expenses as exp
+from boekhouding.services import invoices as svc
+from boekhouding.services import vat_return as btw
+from boekhouding.vat import PurchaseVat, Rubriek, SalesVat
 
 Q1 = (2023, 1)
 
@@ -208,8 +208,9 @@ class TestRoundingAcrossAQuarter:
         for index, bedrag in enumerate(bedragen):
             _invoice(session, acme, bedrag, datum=dt.date(2023, 1, index + 1))
 
-        from app.models import Invoice
         from sqlalchemy import select
+
+        from boekhouding.models import Invoice
 
         facturen = session.scalars(select(Invoice)).all()
         aangifte = btw.compute(session, *Q1)

@@ -10,7 +10,7 @@ import datetime as dt
 
 import pytest
 
-from app.services import invoices as svc
+from boekhouding.services import invoices as svc
 
 
 def _factuur(session, klant, datum=dt.date(2026, 8, 10)):

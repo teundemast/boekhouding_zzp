@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from app import money
+from boekhouding import money
 
 
 class TestRounding:

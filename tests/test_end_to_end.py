@@ -11,10 +11,10 @@ import datetime as dt
 import pytest
 from fastapi.testclient import TestClient
 
-from app import db
-from app.models import Invoice, InvoiceStatus, Settings
-from app.services import vat_return as btw_svc
-from app.vat import Rubriek
+from boekhouding import db
+from boekhouding.models import Invoice, InvoiceStatus, Settings
+from boekhouding.services import vat_return as btw_svc
+from boekhouding.vat import Rubriek
 
 
 @pytest.fixture()
@@ -22,7 +22,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("BOEKHOUDING_DATA", str(tmp_path / "data"))
     db.configure_for_tests(tmp_path / "data")
 
-    from app.web import main as web_main
+    from boekhouding.web import main as web_main
 
     app = web_main.create_app()
     with TestClient(app) as testclient:
@@ -68,7 +68,8 @@ def test_a_full_quarter_from_client_to_filed_return(client, tmp_path):
     # --- Hours ----------------------------------------------------------------------
     with db.session_scope() as session:
         from sqlalchemy import select
-        from app.models import Project
+
+        from boekhouding.models import Project
 
         project_id = session.scalar(select(Project.id))
 
@@ -249,7 +250,8 @@ def test_the_urencriterium_counts_non_billable_hours_too(client):
     )
 
     from sqlalchemy import select
-    from app.models import Project
+
+    from boekhouding.models import Project
 
     with db.session_scope() as session:
         project_id = session.scalar(select(Project.id))

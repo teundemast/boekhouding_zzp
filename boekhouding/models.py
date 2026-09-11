@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import datetime as dt
 from decimal import Decimal
-from typing import Optional
 
 from sqlalchemy import (
     Boolean,
@@ -27,10 +26,10 @@ from sqlalchemy import (
     UniqueConstraint,
     select,
 )
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship
 
-from app import money
-from app.vat import PurchaseVat, SalesVat
+from boekhouding import money
+from boekhouding.vat import PurchaseVat, SalesVat
 
 
 class Base(DeclarativeBase):
@@ -38,13 +37,13 @@ class Base(DeclarativeBase):
 
 
 def _now() -> dt.datetime:
-    return dt.datetime.now(dt.timezone.utc)
+    return dt.datetime.now(dt.UTC)
 
 
 class TimestampMixin:
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now)
     updated_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now, onupdate=_now)
-    deleted_at: Mapped[Optional[dt.datetime]] = mapped_column(DateTime, default=None)
+    deleted_at: Mapped[dt.datetime | None] = mapped_column(DateTime, default=None)
 
     @property
     def is_deleted(self) -> bool:
@@ -99,14 +98,14 @@ class Settings(Base, TimestampMixin):
             "invoice number."
         ),
     )
-    logo_pad: Mapped[Optional[str]] = mapped_column(String, default=None)
+    logo_pad: Mapped[str | None] = mapped_column(String, default=None)
     accentkleur: Mapped[str] = mapped_column(String, default="#000000")
     toon_betaal_qr: Mapped[bool] = mapped_column(Boolean, default=False)
 
     #: Kleineondernemersregeling. When active, sales are exempt and voorbelasting is
     #: not deductible from the start date onwards.
     kor_actief: Mapped[bool] = mapped_column(Boolean, default=False)
-    kor_startdatum: Mapped[Optional[dt.date]] = mapped_column(Date, default=None)
+    kor_startdatum: Mapped[dt.date | None] = mapped_column(Date, default=None)
 
     #: Date from which this system is authoritative; before it, opening balances apply.
     startdatum: Mapped[dt.date] = mapped_column(Date, default=lambda: dt.date(2023, 1, 1))
@@ -114,7 +113,7 @@ class Settings(Base, TimestampMixin):
     reservering_permille: Mapped[int] = mapped_column(Integer, default=350)
 
     @staticmethod
-    def get_or_create(session: Session) -> "Settings":
+    def get_or_create(session: Session) -> Settings:
         settings = session.scalar(select(Settings).limit(1))
         if settings is None:
             settings = Settings()
@@ -197,15 +196,15 @@ class Client(Base, TimestampMixin):
     landcode: Mapped[str] = mapped_column(String, default="NL")
     land: Mapped[str] = mapped_column(String, default="Nederland")
     btw_nummer: Mapped[str] = mapped_column(String, default="")
-    betaaltermijn_dagen: Mapped[Optional[int]] = mapped_column(Integer, default=None)
+    betaaltermijn_dagen: Mapped[int | None] = mapped_column(Integer, default=None)
     standaard_btw: Mapped[str] = mapped_column(String, default=SalesVat.HOOG_21.value)
     taal: Mapped[str] = mapped_column(String, default="nl")
     valuta: Mapped[str] = mapped_column(String, default="EUR")
-    uurtarief_cents: Mapped[Optional[int]] = mapped_column(Integer, default=None)
+    uurtarief_cents: Mapped[int | None] = mapped_column(Integer, default=None)
     notities: Mapped[str] = mapped_column(Text, default="")
 
-    projecten: Mapped[list["Project"]] = relationship(back_populates="client")
-    facturen: Mapped[list["Invoice"]] = relationship(back_populates="client")
+    projecten: Mapped[list[Project]] = relationship(back_populates="client")
+    facturen: Mapped[list[Invoice]] = relationship(back_populates="client")
 
     @property
     def adresregels(self) -> list[str]:
@@ -242,14 +241,14 @@ class TimeEntry(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     datum: Mapped[dt.date] = mapped_column(Date)
-    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("project.id"), default=None)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("project.id"), default=None)
     uren_milli: Mapped[int] = mapped_column(Integer, default=0)
     omschrijving: Mapped[str] = mapped_column(Text, default="")
     declarabel: Mapped[bool] = mapped_column(Boolean, default=True)
     #: Set once the hours have been billed; prevents billing them twice.
-    invoice_id: Mapped[Optional[int]] = mapped_column(ForeignKey("invoice.id"), default=None)
+    invoice_id: Mapped[int | None] = mapped_column(ForeignKey("invoice.id"), default=None)
 
-    project: Mapped[Optional[Project]] = relationship()
+    project: Mapped[Project | None] = relationship()
 
     @property
     def uren(self) -> Decimal:
@@ -282,10 +281,10 @@ class Invoice(Base, TimestampMixin):
     __table_args__ = (UniqueConstraint("nummer", name="uq_invoice_nummer"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    nummer: Mapped[Optional[str]] = mapped_column(String, default=None)
+    nummer: Mapped[str | None] = mapped_column(String, default=None)
     client_id: Mapped[int] = mapped_column(ForeignKey("client.id"))
     datum: Mapped[dt.date] = mapped_column(Date, default=dt.date.today)
-    vervaldatum: Mapped[Optional[dt.date]] = mapped_column(Date, default=None)
+    vervaldatum: Mapped[dt.date | None] = mapped_column(Date, default=None)
     betaaltermijn_dagen: Mapped[int] = mapped_column(Integer, default=14)
     uw_kenmerk: Mapped[str] = mapped_column(String, default="")
     #: Period the work was delivered in; legally required alongside the invoice date.
@@ -298,23 +297,23 @@ class Invoice(Base, TimestampMixin):
     notities: Mapped[str] = mapped_column(Text, default="")
 
     #: A credit note references the invoice it corrects.
-    crediteert_id: Mapped[Optional[int]] = mapped_column(ForeignKey("invoice.id"), default=None)
+    crediteert_id: Mapped[int | None] = mapped_column(ForeignKey("invoice.id"), default=None)
     is_creditfactuur: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    definitief_op: Mapped[Optional[dt.datetime]] = mapped_column(DateTime, default=None)
-    pdf_pad: Mapped[Optional[str]] = mapped_column(String, default=None)
+    definitief_op: Mapped[dt.datetime | None] = mapped_column(DateTime, default=None)
+    pdf_pad: Mapped[str | None] = mapped_column(String, default=None)
     betaald_cents: Mapped[int] = mapped_column(Integer, default=0)
-    betaald_op: Mapped[Optional[dt.date]] = mapped_column(Date, default=None)
+    betaald_op: Mapped[dt.date | None] = mapped_column(Date, default=None)
     #: Quarter in which the BTW on an uncollectible invoice was reclaimed.
-    oninbaar_geclaimd_kwartaal: Mapped[Optional[str]] = mapped_column(String, default=None)
+    oninbaar_geclaimd_kwartaal: Mapped[str | None] = mapped_column(String, default=None)
 
     client: Mapped[Client] = relationship(back_populates="facturen")
-    regels: Mapped[list["InvoiceLine"]] = relationship(
+    regels: Mapped[list[InvoiceLine]] = relationship(
         back_populates="invoice",
         cascade="all, delete-orphan",
         order_by="InvoiceLine.volgorde",
     )
-    crediteert: Mapped[Optional["Invoice"]] = relationship(remote_side=[id])
+    crediteert: Mapped[Invoice | None] = relationship(remote_side=[id])
 
     @property
     def is_final(self) -> bool:
@@ -340,7 +339,7 @@ class Invoice(Base, TimestampMixin):
             grondslagen[regel.btw_behandeling] = (
                 grondslagen.get(regel.btw_behandeling, 0) + regel.totaal_cents
             )
-        from app.vat import sales_spec
+        from boekhouding.vat import sales_spec
 
         resultaat = {}
         for behandeling, grondslag in grondslagen.items():
@@ -374,7 +373,7 @@ class InvoiceLine(Base):
     omschrijving: Mapped[str] = mapped_column(Text, default="")
     stuksprijs_cents: Mapped[int] = mapped_column(Integer, default=0)
     btw_behandeling: Mapped[str] = mapped_column(String, default=SalesVat.HOOG_21.value)
-    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("project.id"), default=None)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("project.id"), default=None)
 
     invoice: Mapped[Invoice] = relationship(back_populates="regels")
 
@@ -424,7 +423,7 @@ class Expense(Base, TimestampMixin):
     leverancier: Mapped[str] = mapped_column(String, default="")
     omschrijving: Mapped[str] = mapped_column(Text, default="")
     factuurnummer: Mapped[str] = mapped_column(String, default="")
-    category_id: Mapped[Optional[int]] = mapped_column(
+    category_id: Mapped[int | None] = mapped_column(
         ForeignKey("expense_category.id"), default=None
     )
     bedrag_excl_cents: Mapped[int] = mapped_column(Integer, default=0)
@@ -435,9 +434,9 @@ class Expense(Base, TimestampMixin):
     #: Business share, in tenths of a percent. A phone used 70% for business is 700.
     zakelijk_permille: Mapped[int] = mapped_column(Integer, default=1000)
     betaald: Mapped[bool] = mapped_column(Boolean, default=True)
-    document_pad: Mapped[Optional[str]] = mapped_column(String, default=None)
+    document_pad: Mapped[str | None] = mapped_column(String, default=None)
 
-    category: Mapped[Optional[ExpenseCategory]] = relationship()
+    category: Mapped[ExpenseCategory | None] = relationship()
 
     @property
     def totaal_incl_cents(self) -> int:
@@ -446,7 +445,7 @@ class Expense(Base, TimestampMixin):
     @property
     def aftrekbare_btw_cents(self) -> int:
         """Voorbelasting, reduced by the private-use share."""
-        from app.vat import purchase_spec
+        from boekhouding.vat import purchase_spec
 
         if not purchase_spec(self.btw_behandeling).deductible:
             return 0
@@ -474,9 +473,9 @@ class Asset(Base, TimestampMixin):
     restwaarde_cents: Mapped[int] = mapped_column(Integer, default=0)
     afschrijftermijn_jaren: Mapped[int] = mapped_column(Integer, default=5)
     zakelijk_permille: Mapped[int] = mapped_column(Integer, default=1000)
-    expense_id: Mapped[Optional[int]] = mapped_column(ForeignKey("expense.id"), default=None)
-    verkocht_op: Mapped[Optional[dt.date]] = mapped_column(Date, default=None)
-    verkoopprijs_cents: Mapped[Optional[int]] = mapped_column(Integer, default=None)
+    expense_id: Mapped[int | None] = mapped_column(ForeignKey("expense.id"), default=None)
+    verkocht_op: Mapped[dt.date | None] = mapped_column(Date, default=None)
+    verkoopprijs_cents: Mapped[int | None] = mapped_column(Integer, default=None)
 
 
 # --------------------------------------------------------------------------------------
@@ -497,9 +496,9 @@ class BankTransaction(Base, TimestampMixin):
     #: Stable hash of the source row, so re-importing a statement cannot duplicate it.
     fingerprint: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="open")  # open|gekoppeld|genegeerd
-    invoice_id: Mapped[Optional[int]] = mapped_column(ForeignKey("invoice.id"), default=None)
-    expense_id: Mapped[Optional[int]] = mapped_column(ForeignKey("expense.id"), default=None)
-    soort: Mapped[Optional[str]] = mapped_column(String, default=None)  # prive|belasting|...
+    invoice_id: Mapped[int | None] = mapped_column(ForeignKey("invoice.id"), default=None)
+    expense_id: Mapped[int | None] = mapped_column(ForeignKey("expense.id"), default=None)
+    soort: Mapped[str | None] = mapped_column(String, default=None)  # prive|belasting|...
 
 
 class VatFiling(Base, TimestampMixin):
@@ -541,4 +540,4 @@ class InboxDocument(Base, TimestampMixin):
     pad: Mapped[str] = mapped_column(String)
     ontvangen_op: Mapped[dt.datetime] = mapped_column(DateTime, default=_now)
     verwerkt: Mapped[bool] = mapped_column(Boolean, default=False)
-    expense_id: Mapped[Optional[int]] = mapped_column(ForeignKey("expense.id"), default=None)
+    expense_id: Mapped[int | None] = mapped_column(ForeignKey("expense.id"), default=None)

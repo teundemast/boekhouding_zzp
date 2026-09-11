@@ -5,22 +5,22 @@ import datetime as dt
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from app import db
-from app.models import Settings
-from app.taxyears import TAX_YEARS, is_estimate
+from boekhouding import db
+from boekhouding.models import Settings
+from boekhouding.taxyears import TAX_YEARS, is_estimate
 
 router = APIRouter(prefix="/instellingen", tags=["instellingen"])
 
 
 def _templates():
-    from app.web.main import templates
+    from boekhouding.web.main import templates
 
     return templates
 
 
 @router.get("", response_class=HTMLResponse)
 def tonen(request: Request, fout: str = "", eerste_start: str = ""):
-    from app.services.invoices import peek_number
+    from boekhouding.services.invoices import peek_number
 
     with db.session_scope() as session:
         instellingen = Settings.get_or_create(session)
@@ -64,7 +64,7 @@ def opslaan(
     reservering_procent: int = Form(35),
     laatste_factuurnummer: str = Form(""),
 ):
-    from app.services.invoices import set_counter
+    from boekhouding.services.invoices import set_counter
 
     with db.session_scope() as session:
         instellingen = Settings.get_or_create(session)

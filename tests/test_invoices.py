@@ -4,10 +4,10 @@ import datetime as dt
 
 import pytest
 
-from app import money
-from app.models import Invoice, InvoiceStatus, Settings, TimeEntry
-from app.services import invoices as svc
-from app.vat import SalesVat
+from boekhouding import money
+from boekhouding.models import Invoice, InvoiceStatus, Settings, TimeEntry
+from boekhouding.services import invoices as svc
+from boekhouding.vat import SalesVat
 
 
 def _f00006(session, acme) -> Invoice:
@@ -74,7 +74,7 @@ class TestNumbering:
 
     def test_a_deleted_draft_does_not_consume_a_number(self, session, acme):
         concept = _f00006(session, acme)
-        concept.deleted_at = dt.datetime.now(dt.timezone.utc)
+        concept.deleted_at = dt.datetime.now(dt.UTC)
         session.flush()
         tweede = _f00006(session, acme)
         svc.finalise(session, tweede)

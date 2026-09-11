@@ -6,16 +6,16 @@ from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import select
 
-from app import db
-from app.models import Expense, ExpenseCategory, InboxDocument
-from app.services import expenses as svc
-from app.vat import PURCHASE_SPECS
+from boekhouding import db
+from boekhouding.models import Expense, ExpenseCategory, InboxDocument
+from boekhouding.services import expenses as svc
+from boekhouding.vat import PURCHASE_SPECS
 
 router = APIRouter(prefix="/kosten", tags=["kosten"])
 
 
 def _templates():
-    from app.web.main import templates
+    from boekhouding.web.main import templates
 
     return templates
 
@@ -38,7 +38,7 @@ def lijst(request: Request, jaar: str = "", kwartaal: str = ""):
     with db.session_scope() as session:
         query = select(Expense).where(Expense.deleted_at.is_(None))
         if jaar:
-            from app.services.vat_return import quarter_range
+            from boekhouding.services.vat_return import quarter_range
 
             if kwartaal:
                 van, tot = quarter_range(int(jaar), int(kwartaal))
@@ -85,7 +85,7 @@ async def aanmaken(
     document: UploadFile | None = File(None),
     inbox_id: str = Form(""),
 ):
-    from app.money import parse_dutch_decimal
+    from boekhouding.money import parse_dutch_decimal
 
     datum_obj = dt.date.fromisoformat(datum)
     document_pad = None
@@ -128,7 +128,7 @@ async def aanmaken(
 def activeren_form(request: Request, kosten_id: int):
     with db.session_scope() as session:
         expense = session.get(Expense, kosten_id)
-        from app.taxyears import tax_year
+        from boekhouding.taxyears import tax_year
 
         return _templates().TemplateResponse(
             request,
@@ -159,7 +159,7 @@ def activeren(
 def verwijderen(kosten_id: int):
     with db.session_scope() as session:
         expense = session.get(Expense, kosten_id)
-        expense.deleted_at = dt.datetime.now(dt.timezone.utc)
+        expense.deleted_at = dt.datetime.now(dt.UTC)
     return RedirectResponse("/kosten", status_code=303)
 
 

@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "boekhouding"
+version = "1.0.0"
+description = "Boekhouding voor een Nederlandse ZZP'er: facturen, kosten, btw-aangifte en de cijfers voor de inkomstenbelasting"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Teun de Mast" }]
+keywords = ["boekhouding", "zzp", "btw", "facturen", "belastingdienst"]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: Dutch",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+
+# Vastgepind, want dit rekent met belastinggeld: een stille upgrade die anders afrondt
+# is precies wat je niet wil ontdekken na het indienen van een aangifte.
+dependencies = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.1",
+    "jinja2==3.1.6",
+    "sqlalchemy==2.0.51",
+    "reportlab==5.0.0",
+    "python-multipart==0.0.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "httpx==0.28.1",
+    "ruff==0.16.7",
+]
+
+[project.scripts]
+boekhouding = "boekhouding.cli:main"
+boekhouding-backup = "boekhouding.backup:main"
+
+[tool.setuptools.packages.find]
+include = ["boekhouding*"]
+
+[tool.setuptools.package-data]
+boekhouding = ["web/templates/*.html", "web/static/*.css"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    # StrEnum is niet hetzelfde. Deze waarden staan in de database en in de templates, en
+    # str() geeft bij StrEnum de waarde maar bij (str, Enum) de naam. Niets te winnen, een
+    # stille gedragsverandering in de btw-codes te verliezen.
+    "UP042",
+    # Dit is juist het FastAPI-idioom: File(...) en Form(...) horen in de default te staan.
+    "B008",
+]

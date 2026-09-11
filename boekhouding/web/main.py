@@ -16,12 +16,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
-from app import db, money
-from app.models import Expense, Invoice, InvoiceStatus, Settings, TimeEntry
-from app.services import expenses as expense_svc
-from app.services import income_tax
-from app.services import vat_return as btw_svc
-from app.taxyears import is_estimate, tax_year
+from boekhouding import db, money
+from boekhouding.models import Expense, Invoice, InvoiceStatus, Settings, TimeEntry
+from boekhouding.services import expenses as expense_svc
+from boekhouding.services import income_tax
+from boekhouding.services import vat_return as btw_svc
+from boekhouding.taxyears import is_estimate, tax_year
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -45,8 +45,8 @@ def create_app() -> FastAPI:
         "/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static"
     )
 
-    from app.web.routes import clients, expenses, invoices, timesheet, settings as settings_routes
-    from app.web.routes import vat
+    from boekhouding.web.routes import clients, expenses, invoices, timesheet, vat
+    from boekhouding.web.routes import settings as settings_routes
 
     application.include_router(clients.router)
     application.include_router(invoices.router)
@@ -187,7 +187,7 @@ def _maandomzet(session, jaar: int) -> list[tuple[str, int]]:
         )
     ):
         totalen[invoice.datum.month - 1] += invoice.subtotaal_cents
-    return list(zip(maanden, totalen))
+    return list(zip(maanden, totalen, strict=True))
 
 
 app = create_app()
